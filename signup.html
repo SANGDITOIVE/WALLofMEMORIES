@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Signup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+
+<style>
+body{
+font-family:sans-serif;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:#f6f2ea;
+}
+
+.box{
+background:white;
+padding:30px;
+border-radius:10px;
+width:300px;
+box-shadow:0 10px 20px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#d4a373;
+border:none;
+color:white;
+cursor:pointer;
+}
+
+a{
+display:block;
+margin-top:10px;
+text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>Create Account</h2>
+
+<input id="email" placeholder="Email">
+
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="createAccount()">Sign Up</button>
+
+<a href="login.html">Already have account?</a>
+
+</div>
+
+<script>
+function createAccount(){
+const email=document.getElementById("email").value
+const password=document.getElementById("password").value
+
+signup(email,password)
+}
+</script>
+
+</body>
+</html>
