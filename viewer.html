@@ -4,332 +4,284 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Memory Viewer – Memories Wall</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-
     * { box-sizing: border-box; }
-    body {
-      background: #f5ede0;
-      font-family: 'Inter', sans-serif;
-      min-height: 100dvh;
-    }
+    body { background: #f5ede0; font-family: 'Inter', sans-serif; min-height: 100dvh; }
 
-    /* ── Polaroid card ── */
     .polaroid-card {
-      background: #fffdf7;
-      padding: 12px 12px 44px;
+      background: #fffdf7; padding: 12px 12px 44px;
       box-shadow: 4px 6px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.08);
-      border-radius: 2px;
-      position: relative;
-      width: 100%;
-      max-width: 420px;
-      margin: 0 auto;
+      border-radius: 2px; position: relative; width: 100%; max-width: 420px; margin: 0 auto;
     }
-    .polaroid-card img {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      object-fit: cover;
-      display: block;
-      border-radius: 1px;
-    }
+    .polaroid-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; border-radius: 1px; }
 
-    /* ── Frame variants ── */
-    .frame-retro     .polaroid-card { border: 6px solid #8B6343; box-shadow: inset 0 0 0 2px #f5ede0, 4px 4px 0 #6b4226; }
+    .frame-retro     .polaroid-card { border: 6px solid #8B6343; }
     .frame-modern    .polaroid-card { border: 3px solid #333; border-radius: 8px; }
-    .frame-christmas .polaroid-card { border: 6px solid #c0392b; box-shadow: 0 0 0 3px #27ae60, 0 6px 20px rgba(0,0,0,0.2); }
+    .frame-christmas .polaroid-card { border: 6px solid #c0392b; box-shadow: 0 0 0 3px #27ae60; }
     .frame-valentine .polaroid-card { border: 6px solid #e91e8c; box-shadow: 0 0 14px 4px #f48fb188; }
-    .frame-tet       .polaroid-card { border: 6px solid #e53935; box-shadow: 0 0 0 3px #ffd600, 0 6px 20px rgba(0,0,0,0.2); }
+    .frame-tet       .polaroid-card { border: 6px solid #e53935; box-shadow: 0 0 0 3px #ffd600; }
 
-    /* ── Stickers on photo ── */
-    .sticker-on-img {
-      position: absolute;
-      font-size: 1.8rem;
-      pointer-events: none;
-      line-height: 1;
-    }
+    .sticker-on-img { position: absolute; font-size: 1.8rem; pointer-events: none; line-height: 1; }
 
-    /* ── Hashtag pill ── */
     .tag-pill {
-      display: inline-block;
-      background: #f0e0cc;
-      color: #8B6343;
-      border-radius: 20px;
-      padding: 3px 12px;
-      font-size: 13px;
-      text-decoration: none;
-      transition: background 0.15s;
+      display: inline-block; background: #f0e0cc; color: #8B6343;
+      border-radius: 20px; padding: 4px 14px; font-size: 14px;
+      text-decoration: none; transition: background 0.15s;
+      font-family: 'Caveat', cursive;
     }
     .tag-pill:hover { background: #e8d0b0; }
 
-    /* ── Nav buttons ── */
     .nav-btn {
-      width: 42px; height: 42px;
-      border-radius: 50%;
-      background: #fffdf7;
-      border: 1.5px solid #e8d5be;
-      color: #8B6343;
-      font-size: 1.2rem;
+      width: 42px; height: 42px; border-radius: 50%; background: #fffdf7;
+      border: 1.5px solid #e8d5be; color: #8B6343; font-size: 1.2rem;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-      flex-shrink: 0;
+      cursor: pointer; transition: background 0.15s, transform 0.1s; flex-shrink: 0;
     }
-    .nav-btn:hover  { background: #f0e0cc; }
+    .nav-btn:hover { background: #f0e0cc; }
     .nav-btn:active { transform: scale(0.92); }
     .nav-btn:disabled { opacity: 0.3; cursor: default; }
 
-    /* ── Swipe transition ── */
-    #card-wrapper {
-      transition: transform 0.28s ease, opacity 0.28s ease;
-    }
+    #card-wrapper { transition: transform 0.28s ease, opacity 0.28s ease; }
     #card-wrapper.slide-left  { transform: translateX(-60px); opacity: 0; }
     #card-wrapper.slide-right { transform: translateX( 60px); opacity: 0; }
 
-    /* ── Skeleton loader ── */
-    .skeleton {
-      background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 4px;
+    /* Delete button */
+    #delete-btn {
+      position: absolute; top: 8px; right: 8px; z-index: 10;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(185,64,64,0.85); color: #fff; border: none;
+      font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s; backdrop-filter: blur(4px);
     }
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
+    #delete-btn:hover { background: #b94040; }
+
+    .skeleton { background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
-
 <body class="min-h-screen">
 
-  <!-- TOP BAR -->
-  <header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3
-                 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
-    <a href="index.html" class="text-[#8B6343] text-xl leading-none" aria-label="Back">&#8592;</a>
-    <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Memory</h1>
-    <a id="edit-link" href="#" class="text-xs text-[#b09070] hover:text-[#8B6343] transition hidden">Edit</a>
-  </header>
+<!-- TOP BAR -->
+<header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
+  <a href="javascript:history.back()" class="text-[#8B6343] text-xl leading-none" aria-label="Back">←</a>
+  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Memory</h1>
+  <div class="w-6"></div>
+</header>
 
-  <!-- MAIN -->
-  <main class="max-w-lg mx-auto px-4 pt-6 pb-12">
+<main class="max-w-lg mx-auto px-4 pt-6 pb-16 space-y-6">
 
-    <!-- Loading skeleton -->
-    <div id="skeleton" class="space-y-4">
-      <div class="skeleton w-full aspect-square rounded-sm"></div>
-      <div class="skeleton h-4 w-3/4 rounded"></div>
-      <div class="skeleton h-4 w-1/2 rounded"></div>
-    </div>
+  <!-- Skeleton -->
+  <div id="skeleton" class="space-y-4">
+    <div class="skeleton w-full aspect-square rounded-sm max-w-sm mx-auto"></div>
+    <div class="skeleton h-5 w-48 rounded-full mx-auto"></div>
+  </div>
 
-    <!-- Error state -->
-    <div id="error-state" class="hidden text-center py-16">
-      <p class="font-['Caveat'] text-2xl text-[#b09070]">Memory not found 🍂</p>
-      <a href="index.html" class="text-sm text-[#8B6343] underline mt-2 inline-block">Go back home</a>
-    </div>
+  <!-- Content -->
+  <div id="content" class="hidden space-y-5">
 
-    <!-- Photo viewer -->
-    <div id="viewer" class="hidden space-y-5">
-
-      <!-- Navigation row -->
-      <div class="flex items-center justify-between gap-3">
-        <button id="btn-prev" class="nav-btn" onclick="navigate(-1)" aria-label="Previous" disabled>&#8592;</button>
-        <p id="counter" class="font-['Caveat'] text-[#b09070] text-sm flex-1 text-center"></p>
-        <button id="btn-next" class="nav-btn" onclick="navigate(1)"  aria-label="Next"     disabled>&#8594;</button>
-      </div>
-
-      <!-- Polaroid card -->
-      <div id="card-wrapper">
-        <div id="frame-wrap">
+    <!-- Navigation + card -->
+    <div class="flex items-center gap-3">
+      <button id="btn-prev" class="nav-btn" onclick="navigate(-1)">‹</button>
+      <div id="card-wrapper" class="flex-1">
+        <div id="frame-wrapper">
           <div class="polaroid-card">
-            <div style="position:relative;">
-              <img id="photo-img" src="" alt="Memory" />
-              <div id="sticker-layer"></div>
+            <button id="delete-btn" onclick="deletePhoto()" title="Delete photo">✕</button>
+            <div id="img-wrap" style="position:relative;">
+              <img id="photo-img" src="" alt="" />
+              <!-- stickers injected here -->
             </div>
-            <!-- Handwritten caption inside polaroid -->
-            <p id="inline-note"
-               class="font-['Caveat'] text-base text-[#6b5240] text-center mt-2 px-1 leading-snug min-h-[22px]"
-            ></p>
+            <!-- Note below photo -->
+            <p id="photo-note" class="font-['Caveat'] text-xl text-[#6b5240] text-center mt-3 px-2 min-h-[28px]"></p>
+            <!-- Date if set -->
+            <p id="photo-date-display" class="font-['Caveat'] text-sm text-[#b09070] text-center mt-1 hidden"></p>
           </div>
         </div>
       </div>
+      <button id="btn-next" class="nav-btn" onclick="navigate(1)">›</button>
+    </div>
 
-      <!-- Date -->
-      <p id="upload-date" class="text-xs text-[#b09070] text-center font-['Caveat'] text-base"></p>
+    <!-- Hashtags -->
+    <div id="hashtag-section" class="hidden">
+      <p class="text-xs text-[#b09070] uppercase tracking-widest mb-2 text-center">Tags</p>
+      <div id="hashtag-pills" class="flex flex-wrap gap-2 justify-center"></div>
+    </div>
 
-      <!-- Hashtags -->
-      <div id="tag-list" class="flex flex-wrap gap-2 justify-center"></div>
+    <!-- Upload date (created_at) -->
+    <p id="upload-date" class="text-center text-xs text-[#b09070]"></p>
 
-      <!-- Full note (if long) -->
-      <div id="full-note-wrap" class="hidden bg-[#fffdf7] rounded-2xl px-5 py-4
-                                       border border-[#e8d5be] shadow-sm">
-        <p class="font-['Caveat'] text-[#8B6343] text-lg mb-1">Note</p>
-        <p id="full-note" class="text-sm text-[#6b5240] leading-relaxed"></p>
-      </div>
-
-    </div><!-- /viewer -->
-  </main>
-
-  <!-- ── UI helpers (no async) ── -->
-  <script>
-    // Swipe state
-    let touchStartX = 0;
-    let touchStartY = 0;
-
-    document.addEventListener('touchstart', e => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    document.addEventListener('touchend', e => {
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 48) {
-        if (dx < 0) navigate(1);   // swipe left  → next
-        else        navigate(-1);  // swipe right → prev
-      }
-    }, { passive: true });
-
-    // Keyboard navigation
-    document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowLeft')  navigate(-1);
-      if (e.key === 'ArrowRight') navigate(1);
-    });
-
-    function formatDate(iso) {
-      const d = new Date(iso);
-      return d.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
-    }
-  </script>
-
-  <!-- ── Supabase + async logic ── -->
-  <script type="module">
-    const { createClient } = supabase;
-    const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'); // 🔧 thay vào đây
-
-    // Auth
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; }
-    const userId = session.user.id;
-
-    // Load ALL user photos for prev/next navigation
-    const { data: allPhotos, error: allErr } = await sb
-      .from('photos').select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (allErr || !allPhotos?.length) {
-      document.getElementById('skeleton').classList.add('hidden');
-      document.getElementById('error-state').classList.remove('hidden');
-      throw new Error('No photos');
-    }
-
-    // Find current index from ?id=
-    const photoId = new URLSearchParams(location.search).get('id');
-    let currentIndex = allPhotos.findIndex(p => p.id === photoId);
-    if (currentIndex === -1) currentIndex = 0;
-
-    // Render photo
-    function renderPhoto(index) {
-      const photo = allPhotos[index];
-      if (!photo) return;
-
-      // Animate out
-      const wrapper = document.getElementById('card-wrapper');
-
-      // Frame
-      const frameWrap = document.getElementById('frame-wrap');
-      frameWrap.className = photo.frame ? 'frame-' + photo.frame : '';
-
-      // Image
-      document.getElementById('photo-img').src = photo.image_url;
-      document.getElementById('photo-img').alt = photo.note || 'Memory';
-
-      // Stickers
-      const stickerLayer = document.getElementById('sticker-layer');
-      stickerLayer.innerHTML = '';
-      if (photo.stickers?.length) {
-        photo.stickers.forEach(s => {
-          const el = document.createElement('span');
-          el.className   = 'sticker-on-img';
-          el.textContent = s.emoji;
-          el.style.left  = s.left;
-          el.style.top   = s.top;
-          stickerLayer.appendChild(el);
-        });
-      }
-
-      // Inline note (short, inside polaroid)
-      const inlineNote = document.getElementById('inline-note');
-      inlineNote.textContent = photo.note ? photo.note.slice(0, 40) : '';
-
-      // Full note
-      const fullNoteWrap = document.getElementById('full-note-wrap');
-      const fullNote     = document.getElementById('full-note');
-      if (photo.note && photo.note.length > 40) {
-        fullNote.textContent = photo.note;
-        fullNoteWrap.classList.remove('hidden');
-      } else {
-        fullNoteWrap.classList.add('hidden');
-      }
-
-      // Date
-      document.getElementById('upload-date').textContent =
-        photo.created_at ? '📅 ' + formatDate(photo.created_at) : '';
-
-      // Hashtags
-      const tagList = document.getElementById('tag-list');
-      tagList.innerHTML = '';
-      if (photo.hashtags?.length) {
-        photo.hashtags.forEach(tag => {
-          const a = document.createElement('a');
-          a.className = 'tag-pill';
-          a.textContent = tag;
-          a.href = 'hashtag.html?tag=' + encodeURIComponent(tag.replace('#',''));
-          tagList.appendChild(a);
-        });
-      }
-
-      // Counter
-      document.getElementById('counter').textContent =
-        `${index + 1} / ${allPhotos.length}`;
-
-      // Nav buttons
-      document.getElementById('btn-prev').disabled = (index === 0);
-      document.getElementById('btn-next').disabled = (index === allPhotos.length - 1);
-
-      // URL update (no reload)
-      history.replaceState(null, '', `viewer.html?id=${photo.id}`);
-    }
-
-    // Navigate
-    window.navigate = function(dir) {
-      const next = currentIndex + dir;
-      if (next < 0 || next >= allPhotos.length) return;
-
-      const wrapper = document.getElementById('card-wrapper');
-      wrapper.classList.add(dir > 0 ? 'slide-left' : 'slide-right');
-
-      setTimeout(() => {
-        currentIndex = next;
-        renderPhoto(currentIndex);
-        wrapper.classList.remove('slide-left', 'slide-right');
-      }, 200);
-    };
-
-    // Show viewer
-    document.getElementById('skeleton').classList.add('hidden');
-    document.getElementById('viewer').classList.remove('hidden');
-    renderPhoto(currentIndex);
-  </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
+  </div>
+</main>
 
 <script>
+  function showToast(msg) {
+    let t = document.getElementById('__toast__');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = '__toast__';
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#3d2b1f;color:#fff;padding:10px 22px;border-radius:24px;font-size:14px;z-index:999;transition:transform 0.3s;white-space:nowrap;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(80px)'; }, 2800);
+  }
+</script>
+
+<script type="module">
+  const { createClient } = supabase;
+  const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; }
+  const userId = session.user.id;
+
+  const params  = new URLSearchParams(location.search);
+  const photoId = params.get('id');
+  const source  = params.get('source'); // 'couple' or null
+  const albumId = params.get('album');
+
+  // Determine table
+  const table = source === 'couple' ? 'couple_photos' : 'photos';
+
+  // Load all photos for navigation
+  let allPhotos = [];
+  let currentIdx = 0;
+
+  if (source === 'couple' && albumId) {
+    const { data } = await sb.from('couple_photos').select('*').eq('album_id', albumId).order('created_at', { ascending: false });
+    allPhotos = data || [];
+  } else {
+    const { data } = await sb.from('photos').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+    allPhotos = data || [];
+  }
+
+  currentIdx = allPhotos.findIndex(p => p.id === photoId);
+  if (currentIdx < 0) currentIdx = 0;
+
+  document.getElementById('skeleton').classList.add('hidden');
+  document.getElementById('content').classList.remove('hidden');
+
+  function renderPhoto(photo) {
+    // Frame
+    const fw = document.getElementById('frame-wrapper');
+    fw.className = photo.frame ? 'frame-' + photo.frame : '';
+
+    // Image
+    document.getElementById('photo-img').src = photo.image_url;
+    document.getElementById('photo-img').alt = photo.note || 'Memory';
+
+    // Note
+    document.getElementById('photo-note').textContent = photo.note || '';
+
+    // Date (photo_date set by user)
+    const dateDisplay = document.getElementById('photo-date-display');
+    if (photo.photo_date) {
+      const d = new Date(photo.photo_date + 'T00:00:00');
+      dateDisplay.textContent = `📅 ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+      dateDisplay.classList.remove('hidden');
+    } else {
+      dateDisplay.classList.add('hidden');
+    }
+
+    // Upload date
+    const up = new Date(photo.created_at);
+    document.getElementById('upload-date').textContent = `Uploaded ${up.toLocaleDateString('en-GB')}`;
+
+    // Hashtags
+    const pills = document.getElementById('hashtag-pills');
+    const section = document.getElementById('hashtag-section');
+    pills.innerHTML = '';
+    if (photo.hashtags?.length) {
+      section.classList.remove('hidden');
+      photo.hashtags.forEach(tag => {
+        const a = document.createElement('a');
+        a.className = 'tag-pill';
+        a.textContent = tag;
+        a.href = `hashtag.html?tag=${encodeURIComponent(tag.replace('#',''))}`;
+        pills.appendChild(a);
+      });
+    } else {
+      section.classList.add('hidden');
+    }
+
+    // Stickers
+    const imgWrap = document.getElementById('img-wrap');
+    imgWrap.querySelectorAll('.sticker-on-img').forEach(s => s.remove());
+    (photo.stickers || []).forEach(s => {
+      const sp = document.createElement('span');
+      sp.className = 'sticker-on-img';
+      sp.textContent = s.emoji;
+      sp.style.left = s.left;
+      sp.style.top  = s.top;
+      imgWrap.appendChild(sp);
+    });
+
+    // Nav buttons
+    document.getElementById('btn-prev').disabled = currentIdx <= 0;
+    document.getElementById('btn-next').disabled = currentIdx >= allPhotos.length - 1;
+
+    // Show delete only for own photos
+    const deletable = source !== 'couple' || photo.uploader_id === userId;
+    document.getElementById('delete-btn').style.display = deletable ? 'flex' : 'none';
+  }
+
+  renderPhoto(allPhotos[currentIdx]);
+
+  // Navigation
+  window.navigate = function(dir) {
+    const wrapper = document.getElementById('card-wrapper');
+    const cls = dir === 1 ? 'slide-left' : 'slide-right';
+    wrapper.classList.add(cls);
+    setTimeout(() => {
+      currentIdx += dir;
+      renderPhoto(allPhotos[currentIdx]);
+      wrapper.classList.remove(cls);
+    }, 250);
+  };
+
+  // Swipe
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) navigate(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  // Delete photo
+  window.deletePhoto = async function() {
+    if (!confirm('Delete this photo? This cannot be undone.')) return;
+
+    const photo = allPhotos[currentIdx];
+    const btn = document.getElementById('delete-btn');
+    btn.disabled = true;
+
+    try {
+      // Delete from DB
+      const { error: dbErr } = await sb.from(table).delete().eq('id', photo.id);
+      if (dbErr) throw dbErr;
+
+      // Delete from storage (parse path from URL)
+      const storagePath = photo.image_url.split('/public/memories/')[1];
+      if (storagePath) {
+        await sb.storage.from('memories').remove([storagePath]);
+      }
+
+      showToast('Photo deleted ✓');
+      setTimeout(() => {
+        if (allPhotos.length <= 1) { history.back(); return; }
+        allPhotos.splice(currentIdx, 1);
+        currentIdx = Math.min(currentIdx, allPhotos.length - 1);
+        renderPhoto(allPhotos[currentIdx]);
+      }, 800);
+
+    } catch (err) {
+      showToast('Error: ' + (err.message || 'Could not delete.'));
+      btn.disabled = false;
+    }
+  };
+</script>
 </body>
-
 </html>
-
-
