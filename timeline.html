@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeline – Memories Wall</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+
+    * { box-sizing: border-box; }
+    body { background: #f5ede0; font-family: 'Inter', sans-serif; }
+
+    /* ── Vertical timeline line ── */
+    .timeline-line {
+      position: absolute;
+      left: 18px;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: repeating-linear-gradient(
+        to bottom,
+        #c8a96e 0px, #c8a96e 8px,
+        transparent 8px, transparent 16px
+      );
+    }
+
+    /* ── Year badge ── */
+    .year-badge {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: #8B6343;
+      color: #fff;
+      font-family: 'Caveat', cursive;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(139,99,67,0.4);
+      flex-shrink: 0;
+    }
+
+    /* ── Month label ── */
+    .month-label {
+      position: relative;
+      z-index: 2;
+      display: inline-block;
+      background: #f0e0cc;
+      border: 1.5px solid #c8a96e;
+      border-radius: 20px;
+      padding: 2px 14px;
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      color: #8B6343;
+      margin-left: 52px;
+    }
+
+    /* ── Polaroid card ── */
+    .polaroid {
+      background: #fffdf7;
+      padding: 7px 7px 26px;
+      box-shadow: 2px 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.08);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      flex-shrink: 0;
+      width: 130px;
+    }
+    @media (min-width: 480px) { .polaroid { width: 150px; } }
+
+    .polaroid:hover {
+      transform: scale(1.06) rotate(0deg) !important;
+      box-shadow: 5px 8px 24px rgba(0,0,0,0.22);
+      z-index: 2;
+    }
+    .polaroid img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      display: block;
+      border-radius: 1px;
+    }
+    @media (min-width: 480px) { .polaroid img { height: 130px; } }
+
+    .polaroid .p-caption {
+      font-family: 'Caveat', cursive;
+      font-size: 11px;
+      color: #6b5240;
+      text-align: center;
+      margin-top: 4px;
+      line-height: 1.3;
+      min-height: 14px;
+    }
+
+    /* ── Frame variants ── */
+    .frame-retro     { border: 4px solid #8B6343 !important; }
+    .frame-modern    { border: 2px solid #333 !important; border-radius: 6px !important; }
+    .frame-christmas { border: 4px solid #c0392b !important; box-shadow: 0 0 0 2px #27ae60 !important; }
+    .frame-valentine { border: 4px solid #e91e8c !important; }
+    .frame-tet       { border: 4px solid #e53935 !important; box-shadow: 0 0 0 2px #ffd600 !important; }
+
+    /* ── Stickers on card ── */
+    .sticker-on-img {
+      position: absolute;
+      font-size: 1rem;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* ── Photo strip (horizontal scroll per month) ── */
+    .photo-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 4px 4px 8px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .photo-strip::-webkit-scrollbar { height: 4px; }
+    .photo-strip::-webkit-scrollbar-track { background: #f0e0cc; border-radius: 2px; }
+    .photo-strip::-webkit-scrollbar-thumb { background: #c8a96e; border-radius: 2px; }
+    .photo-strip .polaroid { scroll-snap-align: start; }
+
+    /* ── Skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Dot on timeline ── */
+    .tl-dot {
+      position: relative;
+      z-index: 2;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #c8a96e;
+      border: 2px solid #f5ede0;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+  <!-- TOP BAR -->
+  <header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3
+                 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
+    <a href="index.html" class="text-[#8B6343] text-xl" aria-label="Back">&#8592;</a>
+    <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Timeline</h1>
+    <div class="w-6"></div>
+  </header>
+
+  <main class="max-w-lg mx-auto px-4 pt-6 pb-16">
+
+    <!-- Skeleton -->
+    <div id="skeleton" class="space-y-6">
+      <div class="skeleton h-5 w-16 rounded-full"></div>
+      <div class="flex gap-3">
+        <div class="skeleton w-36 h-44 rounded-sm flex-shrink-0"></div>
+        <div class="skeleton w-36 h-44 rounded-sm flex-shrink-0"></div>
+        <div class="skeleton w-36 h-44 rounded-sm flex-shrink-0"></div>
+      </div>
+      <div class="skeleton h-5 w-20 rounded-full"></div>
+      <div class="flex gap-3">
+        <div class="skeleton w-36 h-44 rounded-sm flex-shrink-0"></div>
+        <div class="skeleton w-36 h-44 rounded-sm flex-shrink-0"></div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-24">
+      <p class="font-['Caveat'] text-2xl text-[#b09070]">No memories yet 🍂</p>
+      <a href="upload.html" class="text-sm text-[#8B6343] underline mt-3 inline-block">Upload your first memory</a>
+    </div>
+
+    <!-- Timeline content -->
+    <div id="timeline" class="hidden relative">
+      <!-- Dashed vertical line -->
+      <div class="timeline-line"></div>
+      <div id="timeline-content" class="space-y-8"></div>
+    </div>
+
+  </main>
+
+  <!-- ── Supabase + render ── -->
+  <script type="module">
+    const { createClient } = supabase;
+    const sb = createClient('SUPABASE_URL', 'SUPABASE_ANON_KEY'); // 🔧 thay vào đây
+
+    // Auth
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; }
+    const userId = session.user.id;
+
+    // Load all photos
+    const { data: photos, error } = await sb
+      .from('photos').select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    document.getElementById('skeleton').classList.add('hidden');
+
+    if (error || !photos?.length) {
+      document.getElementById('empty-state').classList.remove('hidden');
+      return;
+    }
+
+    // ── Group by Year → Month ─────────────────────────────────────
+    const MONTHS = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+
+    // grouped = { 2025: { 2: [photo, ...], 0: [...] }, 2024: { 11: [...] } }
+    const grouped = {};
+    photos.forEach(p => {
+      const d = new Date(p.created_at);
+      const y = d.getFullYear();
+      const m = d.getMonth(); // 0-indexed
+      if (!grouped[y])    grouped[y]    = {};
+      if (!grouped[y][m]) grouped[y][m] = [];
+      grouped[y][m].push(p);
+    });
+
+    // Sort years desc, months desc
+    const years = Object.keys(grouped).map(Number).sort((a,b) => b - a);
+
+    // ── Render ────────────────────────────────────────────────────
+    const rots     = [-3,-1.5,0,1.5,3,-2,2,-1,1];
+    const content  = document.getElementById('timeline-content');
+
+    years.forEach(year => {
+      // ── Year section ──
+      const yearSection = document.createElement('div');
+      yearSection.className = 'space-y-6';
+
+      // Year header row
+      const yearRow = document.createElement('div');
+      yearRow.className = 'flex items-center gap-4 pl-1';
+
+      const badge = document.createElement('div');
+      badge.className   = 'year-badge';
+      badge.textContent = String(year).slice(2); // show '25 instead of 2025
+
+      const yearLabel = document.createElement('p');
+      yearLabel.className   = "font-['Caveat'] text-3xl font-semibold text-[#8B6343]";
+      yearLabel.textContent = year;
+
+      yearRow.appendChild(badge);
+      yearRow.appendChild(yearLabel);
+      yearSection.appendChild(yearRow);
+
+      // Months within year (desc)
+      const months = Object.keys(grouped[year]).map(Number).sort((a,b) => b - a);
+
+      months.forEach(month => {
+        const monthPhotos = grouped[year][month];
+        const monthBlock  = document.createElement('div');
+        monthBlock.className = 'space-y-3 pl-1';
+
+        // Month row with dot
+        const monthRow = document.createElement('div');
+        monthRow.className = 'flex items-start gap-3';
+
+        const dot = document.createElement('div');
+        dot.className = 'tl-dot ml-3';
+
+        const mLabel = document.createElement('span');
+        mLabel.className   = 'month-label';
+        mLabel.textContent = MONTHS[month];
+        mLabel.style.marginLeft = '0';
+
+        monthRow.appendChild(dot);
+        monthRow.appendChild(mLabel);
+
+        // Photo count badge
+        const countBadge = document.createElement('span');
+        countBadge.className   = "font-['Caveat'] text-xs text-[#b09070] self-center ml-auto pr-1";
+        countBadge.textContent = `${monthPhotos.length} photo${monthPhotos.length > 1 ? 's' : ''}`;
+        monthRow.appendChild(countBadge);
+
+        monthBlock.appendChild(monthRow);
+
+        // Photo strip
+        const strip = document.createElement('div');
+        strip.className = 'photo-strip pl-8';
+
+        monthPhotos.forEach((photo, idx) => {
+          const rot  = rots[idx % rots.length];
+          const card = document.createElement('div');
+          card.className = 'polaroid';
+          card.style.transform = `rotate(${rot}deg)`;
+
+          // Frame
+          if (photo.frame && photo.frame !== 'polaroid') {
+            card.classList.add('frame-' + photo.frame);
+          }
+
+          // Image wrapper
+          const imgWrap = document.createElement('div');
+          imgWrap.style.position = 'relative';
+
+          const img = document.createElement('img');
+          img.src     = photo.image_url;
+          img.alt     = photo.note || 'Memory';
+          img.loading = 'lazy';
+          imgWrap.appendChild(img);
+
+          // Stickers
+          if (photo.stickers?.length) {
+            photo.stickers.forEach(s => {
+              const sp = document.createElement('span');
+              sp.className   = 'sticker-on-img';
+              sp.textContent = s.emoji;
+              sp.style.left  = s.left;
+              sp.style.top   = s.top;
+              imgWrap.appendChild(sp);
+            });
+          }
+
+          // Caption
+          const caption = document.createElement('p');
+          caption.className   = 'p-caption';
+          caption.textContent = photo.note ? photo.note.slice(0, 22) : '';
+
+          card.appendChild(imgWrap);
+          card.appendChild(caption);
+          card.addEventListener('click', () => {
+            window.location.href = `viewer.html?id=${photo.id}`;
+          });
+
+          strip.appendChild(card);
+        });
+
+        monthBlock.appendChild(strip);
+        yearSection.appendChild(monthBlock);
+      });
+
+      content.appendChild(yearSection);
+
+      // Divider between years
+      const hr = document.createElement('div');
+      hr.className = 'border-t border-dashed border-[#e8d5be] ml-8';
+      content.appendChild(hr);
+    });
+
+    // Show timeline
+    document.getElementById('timeline').classList.remove('hidden');
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memories Wall</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+
+    * { box-sizing: border-box; }
+    body { background-color: #f5ede0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+    .fairy-lights { position: relative; width: 100%; height: 28px; overflow: hidden; }
+    .fairy-lights::before {
+      content: ''; position: absolute; top: 12px; left: 0; right: 0; height: 1.5px;
+      background: repeating-linear-gradient(to right, #c8a96e 0px, #c8a96e 18px, transparent 18px, transparent 36px);
+    }
+    .bulb {
+      position: absolute; top: 8px; width: 9px; height: 13px;
+      border-radius: 50% 50% 45% 45%;
+      animation: glow 2.2s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from { opacity: 0.55; filter: blur(0.5px); }
+      to   { opacity: 1;    filter: blur(1.5px); }
+    }
+
+    .rope {
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(to right, #8B6343, #c8a96e, #8B6343);
+      border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+
+    .scroll-strip {
+      display: flex; gap: 2rem; padding: 2.5rem 2rem 1.5rem;
+      width: max-content;
+      animation: scrollLeft 35s linear infinite;
+      cursor: grab; user-select: none;
+    }
+    .scroll-strip:active { cursor: grabbing; }
+    .scroll-strip.paused { animation-play-state: paused; }
+    @keyframes scrollLeft {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .polaroid {
+      background: #fffdf7; padding: 10px 10px 30px;
+      box-shadow: 3px 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 2px; flex-shrink: 0; width: 160px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      position: relative; cursor: pointer;
+    }
+    .polaroid:hover { box-shadow: 6px 10px 28px rgba(0,0,0,0.28); }
+    .polaroid img { width: 100%; height: 140px; object-fit: cover; display: block; border-radius: 1px; }
+    .polaroid .caption {
+      font-family: 'Caveat', cursive; font-size: 13px; color: #6b5240;
+      text-align: center; margin-top: 6px; line-height: 1.3; min-height: 18px;
+    }
+
+    .clip {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      width: 14px; height: 22px;
+      background: linear-gradient(to bottom, #a0714f, #7a5335);
+      border-radius: 3px 3px 2px 2px;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .clip::after {
+      content: ''; position: absolute; top: 7px; left: 2px; right: 2px;
+      height: 2px; background: rgba(0,0,0,0.2); border-radius: 1px;
+    }
+
+    #menu-overlay { transition: transform 0.3s ease, opacity 0.3s ease; }
+    #menu-overlay.hidden-menu { transform: translateX(-100%); opacity: 0; pointer-events: none; }
+
+    /* ── Custom category row ── */
+    .custom-cat {
+      display: flex; align-items: center;
+      border-radius: 8px; overflow: hidden;
+      transition: background 0.15s;
+    }
+    .custom-cat:hover { background: #f0e0cc; }
+    .custom-cat a {
+      flex: 1; display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; text-decoration: none; color: #6b5240; font-size: 14px;
+    }
+    .custom-cat .del-btn {
+      width: 28px; height: 28px; flex-shrink: 0; margin-right: 4px;
+      border: none; background: none; color: #c8a96e;
+      font-size: 15px; cursor: pointer; border-radius: 6px;
+      opacity: 0; transition: opacity 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .custom-cat:hover .del-btn { opacity: 1; }
+    .custom-cat .del-btn:hover { background: #fce4d6; color: #b94040; }
+
+    /* ── Add category form ── */
+    #add-cat-row {
+      display: none; align-items: center; gap-6: 6px;
+      padding: 6px 8px; border-radius: 10px;
+      background: #fffdf7; border: 1.5px solid #e8d5be;
+      margin-top: 4px;
+    }
+    #add-cat-row.open { display: flex; }
+    #emoji-picker-btn {
+      font-size: 1.3rem; width: 32px; height: 32px; flex-shrink: 0;
+      border: none; background: transparent; cursor: pointer; border-radius: 6px;
+      transition: background 0.15s;
+    }
+    #emoji-picker-btn:hover { background: #f0e0cc; }
+    #cat-name-input {
+      flex: 1; border: none; background: transparent; outline: none;
+      font-size: 13px; color: #6b5240; min-width: 0;
+    }
+    #cat-name-input::placeholder { color: #c8a96e; }
+    #save-cat-btn {
+      width: 26px; height: 26px; flex-shrink: 0;
+      border: none; background: #c8a96e; color: #fff;
+      border-radius: 50%; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    #save-cat-btn:hover { background: #a07840; }
+
+    /* ── Emoji quick picker ── */
+    #emoji-panel {
+      display: none; flex-wrap: wrap; gap: 4px;
+      padding: 8px; background: #fffdf7; border: 1.5px solid #e8d5be;
+      border-radius: 12px; margin-top: 4px;
+    }
+    #emoji-panel.open { display: flex; }
+    #emoji-panel span {
+      font-size: 1.3rem; cursor: pointer; padding: 4px;
+      border-radius: 6px; transition: background 0.1s;
+    }
+    #emoji-panel span:hover { background: #f0e0cc; }
+
+    .empty-state {
+      font-family: 'Caveat', cursive; font-size: 1.4rem;
+      color: #b09070; text-align: center; padding: 3rem 1rem;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+  <!-- ══ MENU OVERLAY ══ -->
+  <div id="menu-overlay" class="hidden-menu fixed inset-0 z-50 flex">
+    <div class="absolute inset-0 bg-black/40" onclick="closeMenu()"></div>
+
+    <nav class="relative z-10 w-68 h-full bg-[#fdf6ec] shadow-2xl flex flex-col pt-14 pb-4"
+         style="width:272px;">
+      <button onclick="closeMenu()" class="absolute top-4 right-4 text-[#8B6343] text-2xl leading-none">&times;</button>
+      <p class="font-['Caveat'] text-2xl text-[#8B6343] font-semibold px-5 mb-3" id="menu-title">My Wall</p>
+
+      <!-- Scrollable area -->
+      <div class="flex-1 overflow-y-auto px-3 space-y-1 pb-2">
+
+        <!-- Fixed items -->
+        <a href="index.html"               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>🖼</span><span id="nav-all">All Photos</span></a>
+        <a href="hashtag.html?tag=family"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>👨‍👩‍👧</span><span id="nav-family">Family</span></a>
+        <a href="hashtag.html?tag=lover"   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>💑</span><span id="nav-lover">Lover</span></a>
+        <a href="hashtag.html?tag=friends" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>👫</span><span id="nav-friends">Friends</span></a>
+        <a href="hashtag.html?tag=couple"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>💝</span><span id="nav-couple">Couple Album</span></a>
+
+        <div class="border-t border-[#e8d5be] my-2"></div>
+
+        <!-- Custom categories section -->
+        <p class="px-3 text-[10px] font-semibold uppercase tracking-widest text-[#c8a96e] mb-1" id="lbl-my-cat">My Categories</p>
+
+        <!-- Spinner while loading custom cats -->
+        <p id="cat-loading" class="px-3 text-xs text-[#c8a96e] animate-pulse">Loading…</p>
+
+        <!-- Custom categories list (populated by JS) -->
+        <ul id="custom-cat-list" class="space-y-0.5"></ul>
+
+        <!-- Add category form -->
+        <div id="add-cat-row" class="gap-1.5 mt-1">
+          <button id="emoji-picker-btn" onclick="toggleEmojiPanel()" title="Pick emoji">📁</button>
+          <input id="cat-name-input" type="text" maxlength="24"
+                 placeholder="Category name…"
+                 onkeydown="if(event.key==='Enter')saveCat()" />
+          <button id="save-cat-btn" onclick="saveCat()" title="Save">✓</button>
+        </div>
+
+        <!-- Emoji quick picker -->
+        <div id="emoji-panel">
+          <!-- emojis injected by JS -->
+        </div>
+
+        <!-- + Add button -->
+        <button id="add-cat-btn" onclick="openAddCat()"
+          class="mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-[#c8a96e]
+                 hover:bg-[#f0e0cc] hover:text-[#8B6343] transition text-sm w-full">
+          <span class="text-base">＋</span>
+          <span id="lbl-add-cat">Add category</span>
+        </button>
+
+        <div class="border-t border-[#e8d5be] my-2"></div>
+
+        <a href="timeline.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📅</span><span id="nav-timeline">Timeline</span></a>
+        <a href="upload.html"   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📤</span><span id="nav-upload">Upload</span></a>
+      </div>
+
+      <!-- Logout -->
+      <div class="px-5 pt-3 border-t border-[#e8d5be]">
+        <button onclick="handleLogout()" id="btn-logout"
+          class="w-full text-center text-xs text-[#b09070] hover:text-[#8B6343] transition py-2">
+          Log out
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ══ TOP BAR ══ -->
+  <header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3
+                 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
+    <button onclick="openMenu()" class="w-9 h-9 flex flex-col justify-center items-center gap-1.5 rounded-md hover:bg-[#f0e0cc] transition" aria-label="Menu">
+      <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
+      <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
+      <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
+    </button>
+    <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343] tracking-wide">✦ Memories Wall</h1>
+    <div class="flex items-center gap-2">
+      <button id="lang-btn" onclick="toggleLang()"
+        class="text-xs font-medium px-2.5 py-1 rounded-full border border-[#c8a96e]
+               text-[#8B6343] bg-[#fdf6ec] hover:bg-[#f0e0cc] transition">VI</button>
+      <a href="upload.html"
+        class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e]
+               hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
+    </div>
+  </header>
+
+  <!-- ══ MAIN ══ -->
+  <main class="pt-16">
+    <div class="fairy-lights" id="fairy-lights-bar"></div>
+    <div id="wall-container" class="relative w-full overflow-hidden" style="min-height:260px;">
+      <div class="rope" style="top:14px;"></div>
+      <div id="loading-state" class="flex items-center justify-center h-48">
+        <span class="font-['Caveat'] text-[#b09070] text-lg animate-pulse" id="txt-loading">Loading memories…</span>
+      </div>
+      <div id="scroll-strip" class="scroll-strip hidden"></div>
+      <div id="empty-state" class="empty-state hidden">
+        <p id="txt-empty">No memories yet. Upload your first photo! 📷</p>
+      </div>
+    </div>
+    <p class="text-center font-['Caveat'] text-[#c8a96e] text-base mt-6 mb-4 px-4" id="footer-note">
+      Every photo tells a story ✦
+    </p>
+  </main>
+
+  <!-- ══ Script thường — chạy ngay ══ -->
+  <script>
+    function openMenu()  { document.getElementById('menu-overlay').classList.remove('hidden-menu'); }
+    function closeMenu() { document.getElementById('menu-overlay').classList.add('hidden-menu'); }
+
+    // i18n
+    const T = {
+      en: { loading:'Loading memories…', empty:'No memories yet. Upload your first photo! 📷',
+            footer:'Every photo tells a story ✦', menuTitle:'My Wall', navAll:'All Photos',
+            navFamily:'Family', navLover:'Lover', navFriends:'Friends', navCouple:'Couple Album',
+            navTimeline:'Timeline', navUpload:'Upload', logout:'Log out',
+            myCat:'My Categories', addCat:'Add category', catPlaceholder:'Category name…' },
+      vi: { loading:'Đang tải kỷ niệm…', empty:'Chưa có ảnh nào. Hãy tải ảnh đầu tiên lên! 📷',
+            footer:'Mỗi tấm ảnh là một câu chuyện ✦', menuTitle:'Tường Kỷ Niệm', navAll:'Tất cả ảnh',
+            navFamily:'Gia đình', navLover:'Người yêu', navFriends:'Bạn bè', navCouple:'Album Đôi',
+            navTimeline:'Dòng thời gian', navUpload:'Tải lên', logout:'Đăng xuất',
+            myCat:'Danh mục của tôi', addCat:'Thêm danh mục', catPlaceholder:'Tên danh mục…' }
+    };
+    let lang = localStorage.getItem('mw_lang') || 'en';
+
+    function applyLang() {
+      const t = T[lang];
+      document.getElementById('txt-loading').textContent   = t.loading;
+      document.getElementById('txt-empty').textContent     = t.empty;
+      document.getElementById('footer-note').textContent   = t.footer;
+      document.getElementById('menu-title').textContent    = t.menuTitle;
+      document.getElementById('nav-all').textContent       = t.navAll;
+      document.getElementById('nav-family').textContent    = t.navFamily;
+      document.getElementById('nav-lover').textContent     = t.navLover;
+      document.getElementById('nav-friends').textContent   = t.navFriends;
+      document.getElementById('nav-couple').textContent    = t.navCouple;
+      document.getElementById('nav-timeline').textContent  = t.navTimeline;
+      document.getElementById('nav-upload').textContent    = t.navUpload;
+      document.getElementById('btn-logout').textContent    = t.logout;
+      document.getElementById('lbl-my-cat').textContent    = t.myCat;
+      document.getElementById('lbl-add-cat').textContent   = t.addCat;
+      document.getElementById('cat-name-input').placeholder = t.catPlaceholder;
+      document.getElementById('lang-btn').textContent      = lang === 'en' ? 'VI' : 'EN';
+    }
+    function toggleLang() {
+      lang = lang === 'en' ? 'vi' : 'en';
+      localStorage.setItem('mw_lang', lang);
+      applyLang();
+    }
+    applyLang();
+
+    // ── Emoji picker ──
+    const EMOJIS = ['📁','🌸','🏖','🎵','🐾','🌍','🎂','⚽','🎨','🍜',
+                    '📚','🏋','🌙','🎮','🐶','🌺','🎸','🏡','✈️','🎁'];
+    const panel = document.getElementById('emoji-panel');
+    EMOJIS.forEach(e => {
+      const sp = document.createElement('span');
+      sp.textContent = e;
+      sp.onclick = () => { selectEmoji(e); };
+      panel.appendChild(sp);
+    });
+
+    let chosenEmoji = '📁';
+    function selectEmoji(e) {
+      chosenEmoji = e;
+      document.getElementById('emoji-picker-btn').textContent = e;
+      panel.classList.remove('open');
+    }
+    function toggleEmojiPanel() { panel.classList.toggle('open'); }
+
+    function openAddCat() {
+      document.getElementById('add-cat-row').classList.add('open');
+      document.getElementById('add-cat-btn').style.display = 'none';
+      document.getElementById('cat-name-input').focus();
+    }
+  </script>
+
+  <!-- ══ Script module — Supabase + async ══ -->
+  <script type="module">
+    const { createClient } = supabase;
+    const sb = createClient('SUPABASE_URL', 'SUPABASE_ANON_KEY'); // 🔧 thay vào đây
+
+    window.handleLogout = async () => { await sb.auth.signOut(); location.href = 'login.html'; };
+
+    // Auth
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; }
+    const userId = session.user.id;
+
+    // ── Fairy lights ──
+    const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#c7f2a4','#a8d8ea','#e2b4f7'];
+    const bar = document.getElementById('fairy-lights-bar');
+    for (let i = 0; i < Math.floor(window.innerWidth / 36) + 2; i++) {
+      const b = document.createElement('div');
+      b.className = 'bulb';
+      b.style.cssText = `left:${i*36+10}px;background:${COLORS[i%COLORS.length]};box-shadow:0 0 6px 2px ${COLORS[i%COLORS.length]}88;animation-delay:${i*0.15}s`;
+      bar.appendChild(b);
+    }
+
+    // ── Load custom categories ────────────────────────────────────
+    async function loadCategories() {
+      document.getElementById('cat-loading').style.display = 'block';
+      const { data: cats } = await sb
+        .from('user_categories').select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true });
+      document.getElementById('cat-loading').style.display = 'none';
+      renderCategories(cats || []);
+    }
+
+    function renderCategories(cats) {
+      const list = document.getElementById('custom-cat-list');
+      list.innerHTML = '';
+      cats.forEach(cat => {
+        const li = document.createElement('li');
+        li.className = 'custom-cat';
+        li.dataset.id = cat.id;
+        li.innerHTML = `
+          <a href="hashtag.html?tag=${encodeURIComponent(cat.name.toLowerCase())}">
+            <span>${cat.emoji || '📁'}</span>
+            <span>${cat.name}</span>
+          </a>
+          <button class="del-btn" title="Delete" onclick="deleteCategory('${cat.id}', this)">×</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    // ── Save new category ─────────────────────────────────────────
+    window.saveCat = async function() {
+      const input = document.getElementById('cat-name-input');
+      const name  = input.value.trim();
+      if (!name) { input.focus(); return; }
+
+      const emoji = window.chosenEmoji || '📁';
+      const btn   = document.getElementById('save-cat-btn');
+      btn.textContent = '…'; btn.disabled = true;
+
+      const { data, error } = await sb.from('user_categories').insert({
+        user_id : userId,
+        name    : name,
+        emoji   : emoji,
+      }).select().single();
+
+      btn.textContent = '✓'; btn.disabled = false;
+
+      if (error) { alert('Error: ' + error.message); return; }
+
+      // Append to list immediately
+      const list = document.getElementById('custom-cat-list');
+      const li   = document.createElement('li');
+      li.className  = 'custom-cat';
+      li.dataset.id = data.id;
+      li.innerHTML  = `
+        <a href="hashtag.html?tag=${encodeURIComponent(data.name.toLowerCase())}">
+          <span>${data.emoji}</span>
+          <span>${data.name}</span>
+        </a>
+        <button class="del-btn" title="Delete" onclick="deleteCategory('${data.id}', this)">×</button>
+      `;
+      list.appendChild(li);
+
+      // Reset form
+      input.value = '';
+      window.chosenEmoji = '📁';
+      document.getElementById('emoji-picker-btn').textContent = '📁';
+      document.getElementById('emoji-panel').classList.remove('open');
+      document.getElementById('add-cat-row').classList.remove('open');
+      document.getElementById('add-cat-btn').style.display = '';
+    };
+
+    // ── Delete category ───────────────────────────────────────────
+    window.deleteCategory = async function(id, btnEl) {
+      if (!confirm('Delete this category?')) return;
+      const { error } = await sb.from('user_categories').delete().eq('id', id);
+      if (error) { alert('Error: ' + error.message); return; }
+      btnEl.closest('li').remove();
+    };
+
+    // Load categories after auth
+    await loadCategories();
+
+    // ── Load photos ───────────────────────────────────────────────
+    const { data: photos, error } = await sb
+      .from('photos').select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    const loadingEl = document.getElementById('loading-state');
+    const stripEl   = document.getElementById('scroll-strip');
+    const emptyEl   = document.getElementById('empty-state');
+    loadingEl.classList.add('hidden');
+
+    if (error || !photos?.length) {
+      emptyEl.classList.remove('hidden');
+    } else {
+      stripEl.classList.remove('hidden');
+      const rots = [-4,-2,0,2,4,-3,3,-1,1];
+      [...photos, ...photos].forEach((p, i) => {
+        const rot  = rots[i % rots.length];
+        const card = document.createElement('div');
+        card.className = 'polaroid';
+        card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
+        card.innerHTML = `
+          <div class="clip"></div>
+          <img src="${p.image_url}" alt="${p.note || 'Memory'}" loading="lazy" draggable="false"/>
+          <p class="caption">${p.note ? p.note.slice(0,28) : '✦'}</p>
+        `;
+        card.onclick = () => location.href = `viewer.html?id=${p.id}`;
+        stripEl.appendChild(card);
+      });
+
+      const c = document.getElementById('wall-container');
+      let drag=false, sx=0, sl=0;
+      const pause  = () => stripEl.classList.add('paused');
+      const resume = () => { if (!drag) stripEl.classList.remove('paused'); };
+      c.addEventListener('mouseenter', pause);
+      c.addEventListener('mouseleave', resume);
+      c.addEventListener('mousedown',  e => { drag=true; sx=e.pageX-c.offsetLeft; sl=c.scrollLeft; pause(); });
+      c.addEventListener('mouseup',    () => { drag=false; resume(); });
+      c.addEventListener('mousemove',  e => { if(!drag) return; e.preventDefault(); c.scrollLeft=sl-(e.pageX-c.offsetLeft-sx)*1.4; });
+      c.addEventListener('touchstart', e => { sx=e.touches[0].pageX; sl=c.scrollLeft; pause(); }, {passive:true});
+      c.addEventListener('touchend',   resume);
+      c.addEventListener('touchmove',  e => { c.scrollLeft=sl-(e.touches[0].pageX-sx)*1.4; }, {passive:true});
+    }
+  </script>
+
+</body>
+</html>

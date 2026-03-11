@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hashtag – Memories Wall</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+
+    * { box-sizing: border-box; }
+    body { background: #f5ede0; font-family: 'Inter', sans-serif; }
+
+    /* ── Masonry grid ── */
+    .masonry {
+      columns: 2;
+      column-gap: 12px;
+    }
+    @media (min-width: 480px) { .masonry { columns: 2; } }
+    @media (min-width: 640px) { .masonry { columns: 3; } }
+    @media (min-width: 900px) { .masonry { columns: 4; } }
+
+    .masonry-item {
+      break-inside: avoid;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    /* ── Polaroid card ── */
+    .polaroid {
+      background: #fffdf7;
+      padding: 8px 8px 28px;
+      box-shadow: 2px 4px 12px rgba(0,0,0,0.14), 0 1px 3px rgba(0,0,0,0.08);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+    .polaroid:hover {
+      transform: scale(1.03) rotate(0deg) !important;
+      box-shadow: 6px 10px 28px rgba(0,0,0,0.22);
+      z-index: 2;
+    }
+    .polaroid img {
+      width: 100%;
+      display: block;
+      border-radius: 1px;
+      object-fit: cover;
+    }
+    .polaroid .p-caption {
+      font-family: 'Caveat', cursive;
+      font-size: 12px;
+      color: #6b5240;
+      text-align: center;
+      margin-top: 4px;
+      line-height: 1.3;
+      min-height: 16px;
+    }
+
+    /* ── Frame variants ── */
+    .frame-retro     { border: 5px solid #8B6343 !important; }
+    .frame-modern    { border: 3px solid #333 !important; border-radius: 6px !important; }
+    .frame-christmas { border: 5px solid #c0392b !important; box-shadow: 0 0 0 2px #27ae60 !important; }
+    .frame-valentine { border: 5px solid #e91e8c !important; }
+    .frame-tet       { border: 5px solid #e53935 !important; box-shadow: 0 0 0 2px #ffd600 !important; }
+
+    /* ── Related tag pill ── */
+    .tag-pill {
+      display: inline-block;
+      background: #fffdf7;
+      color: #8B6343;
+      border: 1.5px solid #c8a96e;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 13px;
+      text-decoration: none;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .tag-pill:hover  { background: #f0e0cc; }
+    .tag-pill.active { background: #c8a96e; color: #fff; border-color: #a07840; }
+
+    /* ── Skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Stickers on card ── */
+    .sticker-on-img {
+      position: absolute;
+      font-size: 1.1rem;
+      pointer-events: none;
+      line-height: 1;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+  <!-- TOP BAR -->
+  <header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3
+                 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
+    <a href="index.html" class="text-[#8B6343] text-xl leading-none" aria-label="Back">&#8592;</a>
+    <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Memories Wall</h1>
+    <div class="w-6"></div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-4 pt-6 pb-16">
+
+    <!-- Hashtag hero -->
+    <div class="mb-5 text-center">
+      <h2 id="tag-hero" class="font-['Caveat'] text-4xl font-semibold text-[#8B6343]"></h2>
+      <p  id="tag-count" class="text-sm text-[#b09070] mt-1"></p>
+    </div>
+
+    <!-- Skeleton grid -->
+    <div id="skeleton-grid" class="masonry">
+      <div class="masonry-item"><div class="skeleton" style="height:180px;"></div></div>
+      <div class="masonry-item"><div class="skeleton" style="height:220px;"></div></div>
+      <div class="masonry-item"><div class="skeleton" style="height:160px;"></div></div>
+      <div class="masonry-item"><div class="skeleton" style="height:240px;"></div></div>
+      <div class="masonry-item"><div class="skeleton" style="height:190px;"></div></div>
+      <div class="masonry-item"><div class="skeleton" style="height:170px;"></div></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-20">
+      <p class="font-['Caveat'] text-2xl text-[#b09070]">No memories with this tag 🍂</p>
+      <a href="index.html" class="text-sm text-[#8B6343] underline mt-3 inline-block">Back to wall</a>
+    </div>
+
+    <!-- Related tags -->
+    <div id="related-wrap" class="hidden mb-5">
+      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">Related tags</p>
+      <div id="related-tags" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Masonry grid -->
+    <div id="photo-grid" class="masonry hidden"></div>
+
+  </main>
+
+  <!-- ── Supabase + render ── -->
+  <script type="module">
+    const { createClient } = supabase;
+    const sb = createClient('SUPABASE_URL', 'SUPABASE_ANON_KEY'); // 🔧 thay vào đây
+
+    // Auth
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; }
+    const userId = session.user.id;
+
+    // Read tag from URL
+    const rawTag = new URLSearchParams(location.search).get('tag') || '';
+    const tag    = rawTag.replace('#', '').toLowerCase().trim();
+    if (!tag) { window.location.href = 'index.html'; }
+
+    // Update page title & hero
+    document.title = `#${tag} – Memories Wall`;
+    document.getElementById('tag-hero').textContent = '#' + tag;
+
+    // Query: photos where hashtags array contains this tag
+    // Supabase: use cs (contains) operator on array column
+    const { data: photos, error } = await sb
+      .from('photos')
+      .select('*')
+      .eq('user_id', userId)
+      .contains('hashtags', [`#${tag}`])
+      .order('created_at', { ascending: false });
+
+    // Hide skeleton
+    document.getElementById('skeleton-grid').classList.add('hidden');
+
+    if (error || !photos?.length) {
+      document.getElementById('empty-state').classList.remove('hidden');
+      return;
+    }
+
+    // Count
+    document.getElementById('tag-count').textContent =
+      `${photos.length} memor${photos.length === 1 ? 'y' : 'ies'}`;
+
+    // ── Related tags ──────────────────────────────────────────────
+    const tagFreq = {};
+    photos.forEach(p => {
+      (p.hashtags || []).forEach(t => {
+        if (t.replace('#','') === tag) return; // skip current tag
+        tagFreq[t] = (tagFreq[t] || 0) + 1;
+      });
+    });
+    const related = Object.entries(tagFreq)
+      .sort((a,b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([t]) => t);
+
+    if (related.length) {
+      const relWrap = document.getElementById('related-wrap');
+      const relList = document.getElementById('related-tags');
+      relWrap.classList.remove('hidden');
+
+      related.forEach(t => {
+        const a = document.createElement('a');
+        a.className = 'tag-pill';
+        a.textContent = t;
+        a.href = 'hashtag.html?tag=' + encodeURIComponent(t.replace('#',''));
+        relList.appendChild(a);
+      });
+    }
+
+    // ── Masonry grid ──────────────────────────────────────────────
+    const grid = document.getElementById('photo-grid');
+    grid.classList.remove('hidden');
+
+    // Rotation pool for organic feel
+    const rots = [-3, -1.5, 0, 1.5, 3, -2, 2, -1, 1];
+
+    photos.forEach((photo, idx) => {
+      const rot  = rots[idx % rots.length];
+      const item = document.createElement('div');
+      item.className = 'masonry-item';
+
+      const card = document.createElement('div');
+      card.className = 'polaroid';
+      card.style.transform = `rotate(${rot}deg)`;
+
+      // Frame class
+      if (photo.frame && photo.frame !== 'polaroid') {
+        card.classList.add('frame-' + photo.frame);
+      }
+
+      // Image wrapper (for sticker positioning)
+      const imgWrap = document.createElement('div');
+      imgWrap.style.position = 'relative';
+
+      const img = document.createElement('img');
+      img.src     = photo.image_url;
+      img.alt     = photo.note || 'Memory';
+      img.loading = 'lazy';
+      imgWrap.appendChild(img);
+
+      // Stickers
+      if (photo.stickers?.length) {
+        photo.stickers.forEach(s => {
+          const sp = document.createElement('span');
+          sp.className   = 'sticker-on-img';
+          sp.textContent = s.emoji;
+          sp.style.left  = s.left;
+          sp.style.top   = s.top;
+          imgWrap.appendChild(sp);
+        });
+      }
+
+      // Caption
+      const caption = document.createElement('p');
+      caption.className   = 'p-caption';
+      caption.textContent = photo.note ? photo.note.slice(0, 30) : '';
+
+      card.appendChild(imgWrap);
+      card.appendChild(caption);
+      card.addEventListener('click', () => {
+        window.location.href = `viewer.html?id=${photo.id}`;
+      });
+
+      item.appendChild(card);
+      grid.appendChild(item);
+    });
+  </script>
+
+</body>
+</html>
