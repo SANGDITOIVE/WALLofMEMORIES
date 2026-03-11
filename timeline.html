@@ -1,195 +1,224 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Timeline – Memories Wall</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-    * { box-sizing: border-box; }
-    body { background: #f5ede0; font-family: 'Inter', sans-serif; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dòng thời gian – Memories Wall</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
+* { box-sizing: border-box; }
+body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; }
 
-    .timeline-line { position: absolute; left: 18px; top: 0; bottom: 0; width: 2px; background: repeating-linear-gradient(to bottom, #c8a96e 0px, #c8a96e 8px, transparent 8px, transparent 16px); }
+/* ── Year heading ── */
+.year-heading {
+  font-family: 'Caveat', cursive; font-size: 2rem; font-weight: 600;
+  color: #8B6343; padding: 0 1rem;
+  display: flex; align-items: center; gap: 12px;
+}
+.year-heading::after {
+  content: ''; flex: 1; height: 2px;
+  background: linear-gradient(to right, #c8a96e, transparent);
+  border-radius: 1px;
+}
 
-    .year-badge { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: #8B6343; color: #fff; font-family: 'Caveat', cursive; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(139,99,67,0.4); flex-shrink: 0; }
+/* ── Month heading ── */
+.month-heading {
+  font-family: 'Caveat', cursive; font-size: 1.2rem;
+  color: #a07840; padding: 0 1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.month-dot { width:8px; height:8px; border-radius:50%; background:#c8a96e; flex-shrink:0; }
 
-    .month-label { display: inline-block; background: #f0e0cc; border: 1.5px solid #c8a96e; border-radius: 20px; padding: 2px 14px; font-family: 'Caveat', cursive; font-size: 15px; color: #8B6343; }
+/* ── Day heading ── */
+.day-heading {
+  font-family: 'Caveat', cursive; font-size:1rem; color:#b09070;
+  padding: 0 1rem; margin-top: 4px;
+}
 
-    .day-label { display: inline-block; background: #fffdf7; border: 1px solid #e8d5be; border-radius: 12px; padding: 1px 10px; font-family: 'Caveat', cursive; font-size: 13px; color: #b09070; }
+/* ── Photo grid row (horizontal wrap) ── */
+.day-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 1rem 4px;
+}
 
-    .polaroid { background: #fffdf7; padding: 7px 7px 26px; box-shadow: 2px 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.08); border-radius: 2px; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; flex-shrink: 0; width: 130px; }
-    @media (min-width: 480px) { .polaroid { width: 150px; } }
-    .polaroid:hover { transform: scale(1.06) rotate(0deg) !important; box-shadow: 5px 8px 24px rgba(0,0,0,0.22); z-index: 2; }
-    .polaroid img { width: 100%; height: 110px; object-fit: cover; display: block; border-radius: 1px; }
-    @media (min-width: 480px) { .polaroid img { height: 130px; } }
-    .polaroid .p-caption { font-family: 'Caveat', cursive; font-size: 11px; color: #6b5240; text-align: center; margin-top: 4px; line-height: 1.3; min-height: 14px; }
+/* ── Polaroid ── */
+.polaroid {
+  background: #fffdf7; padding: 7px 7px 24px;
+  box-shadow: 2px 4px 12px rgba(0,0,0,.14);
+  border-radius: 2px; cursor: pointer; position: relative;
+  width: 130px; flex-shrink: 0;
+  transition: transform .2s, box-shadow .2s;
+}
+@media (min-width:480px) { .polaroid { width:150px; } }
+.polaroid:hover { transform: scale(1.05); box-shadow:5px 8px 22px rgba(0,0,0,.22); z-index:2; }
+.polaroid img { width:100%; height:110px; object-fit:cover; display:block; border-radius:1px; }
+@media (min-width:480px) { .polaroid img { height:130px; } }
+.polaroid .caption { font-family:'Caveat',cursive; font-size:11px; color:#6b5240; text-align:center; margin-top:4px; line-height:1.3; }
 
-    .frame-retro     { border: 4px solid #8B6343 !important; }
-    .frame-modern    { border: 2px solid #333 !important; border-radius: 6px !important; }
-    .frame-christmas { border: 4px solid #c0392b !important; box-shadow: 0 0 0 2px #27ae60 !important; }
-    .frame-valentine { border: 4px solid #e91e8c !important; }
-    .frame-tet       { border: 4px solid #e53935 !important; box-shadow: 0 0 0 2px #ffd600 !important; }
+.frame-retro     { border:5px solid #8B6343; }
+.frame-modern    { border:2px solid #333; border-radius:6px; }
+.frame-christmas { border:5px solid #c0392b; box-shadow:0 0 0 2px #27ae60; }
+.frame-valentine { border:5px solid #e91e8c; }
+.frame-tet       { border:5px solid #e53935; box-shadow:0 0 0 2px #ffd600; }
 
-    .sticker-on-img { position: absolute; font-size: 1rem; pointer-events: none; line-height: 1; }
+.sticker-on-img { position:absolute; font-size:1rem; pointer-events:none; line-height:1; }
 
-    .photo-strip { display: flex; gap: 12px; overflow-x: auto; padding: 4px 4px 8px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-    .photo-strip::-webkit-scrollbar { height: 4px; }
-    .photo-strip::-webkit-scrollbar-track { background: #f0e0cc; border-radius: 2px; }
-    .photo-strip::-webkit-scrollbar-thumb { background: #c8a96e; border-radius: 2px; }
-    .photo-strip .polaroid { scroll-snap-align: start; }
+/* ── Divider ── */
+.year-divider { border:none; border-top:2px dashed #e8d5be; margin:1.5rem 1rem; }
 
-    .tl-dot { position: relative; z-index: 2; width: 10px; height: 10px; border-radius: 50%; background: #c8a96e; border: 2px solid #f5ede0; flex-shrink: 0; margin-top: 5px; }
-
-    .skeleton { background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-  </style>
+.skeleton { background:linear-gradient(90deg,#e8d5be 25%,#f5ede0 50%,#e8d5be 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
 </head>
 <body class="min-h-screen">
 
 <header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
-  <a href="index.html" class="text-[#8B6343] text-xl" aria-label="Back">←</a>
-  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Timeline</h1>
+  <a href="index.html" class="text-[#8B6343] text-xl" aria-label="Quay lại">←</a>
+  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">📅 Dòng thời gian</h1>
   <div class="w-6"></div>
 </header>
 
-<main class="max-w-lg mx-auto px-4 pt-6 pb-16">
-  <div id="skeleton" class="space-y-6">
-    <div class="skeleton h-5 w-16 rounded-full"></div>
-    <div class="flex gap-3"><div class="skeleton w-36 h-44 rounded-sm flex-shrink-0"></div><div class="skeleton w-36 h-44 rounded-sm flex-shrink-0"></div></div>
+<main class="max-w-2xl mx-auto pt-4 pb-16">
+  <!-- Skeleton -->
+  <div id="skeleton" class="space-y-6 px-4 pt-2">
+    <div class="skeleton h-8 w-24 rounded-full"></div>
+    <div class="flex gap-3 flex-wrap">
+      <div class="skeleton w-32 h-40 rounded-sm flex-shrink-0"></div>
+      <div class="skeleton w-32 h-40 rounded-sm flex-shrink-0"></div>
+      <div class="skeleton w-32 h-40 rounded-sm flex-shrink-0"></div>
+    </div>
   </div>
+
+  <!-- Empty -->
   <div id="empty-state" class="hidden text-center py-24">
-    <p class="font-['Caveat'] text-2xl text-[#b09070]">No memories yet 🍂</p>
-    <a href="upload.html" class="text-sm text-[#8B6343] underline mt-3 inline-block">Upload your first memory</a>
+    <p class="font-['Caveat'] text-2xl text-[#b09070]">Chưa có kỷ niệm nào 🍂</p>
+    <a href="upload.html" class="text-sm text-[#8B6343] underline mt-3 inline-block">Tải ảnh đầu tiên lên</a>
   </div>
-  <div id="timeline" class="hidden relative">
-    <div class="timeline-line"></div>
-    <div id="timeline-content" class="space-y-8"></div>
-  </div>
+
+  <!-- Timeline -->
+  <div id="timeline" class="hidden space-y-6"></div>
 </main>
 
 <script type="module">
-  const { createClient } = supabase;
-  const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
+const { createClient } = supabase;
+const sb = createClient(
+  'https://ifarghceexpsfyfatjkb.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
+);
 
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'login.html'; }
-  const userId = session.user.id;
+const { data: { session } } = await sb.auth.getSession();
+if (!session) { location.href = 'login.html'; }
+const userId = session.user.id;
 
-  const { data: photos, error } = await sb.from('photos').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+const { data: photos, error } = await sb
+  .from('photos').select('*')
+  .eq('user_id', userId)
+  .order('created_at', { ascending: false }); // Newest first
 
-  document.getElementById('skeleton').classList.add('hidden');
-  if (error || !photos?.length) { document.getElementById('empty-state').classList.remove('hidden'); return; }
+document.getElementById('skeleton').classList.add('hidden');
 
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+if (error || !photos?.length) {
+  document.getElementById('empty-state').classList.remove('hidden');
+  return;
+}
 
-  // Group: year → month → day → photos
-  const grouped = {};
-  photos.forEach(p => {
-    const d = new Date(p.created_at);
-    const y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
-    if (!grouped[y])       grouped[y]       = {};
-    if (!grouped[y][m])    grouped[y][m]    = {};
-    if (!grouped[y][m][day]) grouped[y][m][day] = [];
-    grouped[y][m][day].push(p);
-  });
+// Group: Year → Month → Day
+const MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
-  const years   = Object.keys(grouped).map(Number).sort((a,b) => b - a);
-  const rots    = [-3,-1.5,0,1.5,3,-2,2,-1,1];
-  const content = document.getElementById('timeline-content');
+const grouped = {}; // { year: { month: { day: [photos] } } }
+photos.forEach(p => {
+  const d = new Date(p.created_at);
+  const y = d.getFullYear(), m = d.getMonth(), dd = d.getDate();
+  if (!grouped[y])       grouped[y]       = {};
+  if (!grouped[y][m])    grouped[y][m]    = {};
+  if (!grouped[y][m][dd]) grouped[y][m][dd] = [];
+  grouped[y][m][dd].push(p);
+});
 
-  years.forEach(year => {
-    const yearSection = document.createElement('div');
-    yearSection.className = 'space-y-5';
+const years = Object.keys(grouped).map(Number).sort((a,b) => b-a);
+const rots  = [-3,-1.5,0,1.5,3,-2,2,-1,1];
+const tl    = document.getElementById('timeline');
 
-    const yearRow = document.createElement('div');
-    yearRow.className = 'flex items-center gap-4 pl-1';
-    const badge = document.createElement('div');
-    badge.className = 'year-badge';
-    badge.textContent = String(year).slice(2);
-    const yearLabel = document.createElement('p');
-    yearLabel.className = "font-['Caveat'] text-3xl font-semibold text-[#8B6343]";
-    yearLabel.textContent = year;
-    yearRow.appendChild(badge); yearRow.appendChild(yearLabel);
-    yearSection.appendChild(yearRow);
+years.forEach((year, yi) => {
+  // Year heading
+  const yh = document.createElement('div');
+  yh.className = 'year-heading mt-4';
+  yh.innerHTML = `<span>📆 ${year}</span>`;
+  tl.appendChild(yh);
 
-    const months = Object.keys(grouped[year]).map(Number).sort((a,b) => b - a);
-    months.forEach(month => {
-      const monthBlock = document.createElement('div');
-      monthBlock.className = 'space-y-3 pl-1';
+  const months = Object.keys(grouped[year]).map(Number).sort((a,b)=>b-a);
 
-      const monthRow = document.createElement('div');
-      monthRow.className = 'flex items-start gap-3';
-      const dot = document.createElement('div'); dot.className = 'tl-dot ml-3';
-      const mLabel = document.createElement('span'); mLabel.className = 'month-label'; mLabel.textContent = MONTHS[month];
-      const totalInMonth = Object.values(grouped[year][month]).flat().length;
-      const countBadge = document.createElement('span');
-      countBadge.className = "font-['Caveat'] text-xs text-[#b09070] self-center ml-auto pr-1";
-      countBadge.textContent = `${totalInMonth} photo${totalInMonth > 1 ? 's' : ''}`;
-      monthRow.appendChild(dot); monthRow.appendChild(mLabel); monthRow.appendChild(countBadge);
-      monthBlock.appendChild(monthRow);
+  months.forEach(month => {
+    // Month heading
+    const mh = document.createElement('div');
+    mh.className = 'month-heading';
+    mh.innerHTML = `<span class="month-dot"></span>${MONTHS[month]}`;
+    tl.appendChild(mh);
 
-      // Sort days descending within month
-      const days = Object.keys(grouped[year][month]).map(Number).sort((a,b) => b - a);
-      days.forEach(day => {
-        const dayPhotos = grouped[year][month][day];
+    const days = Object.keys(grouped[year][month]).map(Number).sort((a,b)=>b-a);
 
-        // Day label
-        const dayRow = document.createElement('div');
-        dayRow.className = 'flex items-center gap-2 pl-8 mt-2';
-        const dayBadge = document.createElement('span');
-        dayBadge.className = 'day-label';
-        dayBadge.textContent = `${day}/${month+1}`;
-        dayRow.appendChild(dayBadge);
-        monthBlock.appendChild(dayRow);
+    days.forEach(day => {
+      // Day heading
+      const dh = document.createElement('div');
+      dh.className = 'day-heading';
+      dh.textContent = `Ngày ${day}/${month+1}`;
+      tl.appendChild(dh);
 
-        // Photo strip for this day
-        const strip = document.createElement('div');
-        strip.className = 'photo-strip pl-8';
+      // Day grid
+      const grid = document.createElement('div');
+      grid.className = 'day-grid';
 
-        dayPhotos.forEach((photo, idx) => {
-          const rot  = rots[idx % rots.length];
-          const card = document.createElement('div');
-          card.className = 'polaroid';
-          card.style.transform = `rotate(${rot}deg)`;
-          if (photo.frame && photo.frame !== 'polaroid') card.classList.add('frame-' + photo.frame);
+      grouped[year][month][day].forEach((p, idx) => {
+        const rot  = rots[idx % rots.length];
+        const card = document.createElement('div');
+        card.className = 'polaroid';
+        if (p.frame && p.frame !== 'none' && p.frame !== 'polaroid') card.classList.add('frame-' + p.frame);
+        card.style.transform = `rotate(${rot}deg)`;
 
-          const imgWrap = document.createElement('div');
-          imgWrap.style.position = 'relative';
-          const img = document.createElement('img');
-          img.src = photo.image_url; img.alt = photo.note || 'Memory'; img.loading = 'lazy';
-          imgWrap.appendChild(img);
+        const imgWrap = document.createElement('div');
+        imgWrap.style.position = 'relative';
+        const img = document.createElement('img');
+        img.src = p.image_url; img.alt = p.note||'Memory'; img.loading = 'lazy';
+        imgWrap.appendChild(img);
 
-          (photo.stickers || []).forEach(s => {
+        if (p.stickers?.length) {
+          p.stickers.forEach(s => {
             const sp = document.createElement('span');
-            sp.className = 'sticker-on-img'; sp.textContent = s.emoji;
+            sp.className = 'sticker-on-img';
+            sp.textContent = s.emoji;
             sp.style.left = s.left; sp.style.top = s.top;
             imgWrap.appendChild(sp);
           });
+        }
 
-          const caption = document.createElement('p');
-          caption.className = 'p-caption';
-          caption.textContent = photo.note ? photo.note.slice(0,22) : '';
+        const caption = document.createElement('p');
+        caption.className = 'caption';
+        caption.textContent = p.note ? p.note.slice(0,20) : '';
 
-          card.appendChild(imgWrap); card.appendChild(caption);
-          card.addEventListener('click', () => { window.location.href = `viewer.html?id=${photo.id}`; });
-          strip.appendChild(card);
-        });
-
-        monthBlock.appendChild(strip);
+        card.appendChild(imgWrap);
+        card.appendChild(caption);
+        card.addEventListener('click', () => location.href = `viewer.html?id=${p.id}`);
+        grid.appendChild(card);
       });
 
-      yearSection.appendChild(monthBlock);
+      tl.appendChild(grid);
     });
-
-    content.appendChild(yearSection);
-    const hr = document.createElement('div');
-    hr.className = 'border-t border-dashed border-[#e8d5be] ml-8';
-    content.appendChild(hr);
   });
 
-  document.getElementById('timeline').classList.remove('hidden');
+  // Divider between years
+  if (yi < years.length - 1) {
+    const hr = document.createElement('hr');
+    hr.className = 'year-divider';
+    tl.appendChild(hr);
+  }
+});
+
+document.getElementById('timeline').classList.remove('hidden');
 </script>
 </body>
 </html>
