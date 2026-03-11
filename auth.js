@@ -11,7 +11,8 @@ async function requireLogin() {
 }
 
 async function signup(email, password) {
-  const { data, error } = await supabaseClient.auth.signUp({
+
+  const { data, error } = await supabase.auth.signUp({
     email: email,
     password: password
   });
@@ -21,11 +22,12 @@ async function signup(email, password) {
     return;
   }
 
-  alert("Account created!");
+  alert("Account created! Please login.");
   window.location.href = "login.html";
 }
 
 async function login(email, password) {
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email,
     password: password
