@@ -225,8 +225,20 @@
       <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
     </button>
     <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343] tracking-wide">✦ Memories Wall</h1>
-    <div class="flex items-center gap-2">
-      <button id="lang-btn" onclick="toggleLang()"
+<div class="flex items-center gap-2">
+
+<a href="login.html"
+class="text-xs px-3 py-1 rounded-full border border-[#c8a96e]
+text-[#8B6343] hover:bg-[#f0e0cc]">
+Login
+</a>
+
+<a href="signup.html"
+class="text-xs px-3 py-1 rounded-full border border-[#c8a96e]
+text-[#8B6343] hover:bg-[#f0e0cc]">
+Sign up
+</a>
+  <button id="lang-btn" onclick="toggleLang()"
         class="text-xs font-medium px-2.5 py-1 rounded-full border border-[#c8a96e]
                text-[#8B6343] bg-[#fdf6ec] hover:bg-[#f0e0cc] transition">VI</button>
       <a href="upload.html"
@@ -328,7 +340,7 @@
   <!-- ══ Script module — Supabase + async ══ -->
   <script type="module">
     const { createClient } = supabase;
-    const sb = createClient('SUPABASE_URL', 'SUPABASE_ANON_KEY'); // 🔧 thay vào đây
+    const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'); // 🔧 thay vào đây
 
     window.handleLogout = async () => { await sb.auth.signOut(); location.href = 'login.html'; };
 
@@ -478,8 +490,8 @@
 <script src="supabase.js"></script>
 <script src="auth.js"></script>
 
-<script>
 </body>
 
 </html>
+
 
