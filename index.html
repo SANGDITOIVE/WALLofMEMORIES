@@ -6,6 +6,8 @@
   <title>Memories Wall</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
 
@@ -53,32 +55,36 @@
       transition: transform 0.25s ease, box-shadow 0.25s ease;
       position: relative; cursor: pointer;
     }
-    /* nút xoá ảnh */
-.delete-btn{
-position:absolute;
-top:6px;
-right:6px;
-background:#fff;
-border:none;
-border-radius:50%;
-width:22px;
-height:22px;
-font-size:12px;
-cursor:pointer;
-box-shadow:0 1px 3px rgba(0,0,0,0.3);
-z-index:5;
-}
-
-.delete-btn:hover{
-background:#ffd6d6;
-}
     .polaroid:hover { box-shadow: 6px 10px 28px rgba(0,0,0,0.28); }
     .polaroid img { width: 100%; height: 140px; object-fit: cover; display: block; border-radius: 1px; }
     .polaroid .caption {
       font-family: 'Caveat', cursive; font-size: 13px; color: #6b5240;
       text-align: center; margin-top: 6px; line-height: 1.3; min-height: 18px;
     }
-  
+
+    /* ── [NEW] Hashtag pills on card ── */
+    .polaroid .tag-row {
+      display: flex; flex-wrap: wrap; gap: 3px;
+      justify-content: center; margin-top: 5px;
+    }
+    .polaroid .tag-row a {
+      font-family: 'Caveat', cursive; font-size: 11px;
+      color: #a07840; text-decoration: none;
+      background: #f5ede0; border-radius: 10px;
+      padding: 1px 7px; transition: background 0.15s;
+      pointer-events: all;
+    }
+    .polaroid .tag-row a:hover { background: #e8d5be; }
+
+    /* ── [NEW] User avatar ── */
+    .user-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, #c8a96e, #8B6343);
+      color: #fff; font-family: 'Caveat', cursive; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; cursor: default; user-select: none;
+    }
+
     .clip {
       position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
       width: 14px; height: 22px;
@@ -174,10 +180,7 @@ background:#ffd6d6;
       <button onclick="closeMenu()" class="absolute top-4 right-4 text-[#8B6343] text-2xl leading-none">&times;</button>
       <p class="font-['Caveat'] text-2xl text-[#8B6343] font-semibold px-5 mb-3" id="menu-title">My Wall</p>
 
-      <!-- Scrollable area -->
       <div class="flex-1 overflow-y-auto px-3 space-y-1 pb-2">
-
-        <!-- Fixed items -->
         <a href="index.html"               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>🖼</span><span id="nav-all">All Photos</span></a>
         <a href="hashtag.html?tag=family"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>👨‍👩‍👧</span><span id="nav-family">Family</span></a>
         <a href="hashtag.html?tag=lover"   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>💑</span><span id="nav-lover">Lover</span></a>
@@ -186,16 +189,10 @@ background:#ffd6d6;
 
         <div class="border-t border-[#e8d5be] my-2"></div>
 
-        <!-- Custom categories section -->
         <p class="px-3 text-[10px] font-semibold uppercase tracking-widest text-[#c8a96e] mb-1" id="lbl-my-cat">My Categories</p>
-
-        <!-- Spinner while loading custom cats -->
         <p id="cat-loading" class="px-3 text-xs text-[#c8a96e] animate-pulse">Loading…</p>
-
-        <!-- Custom categories list (populated by JS) -->
         <ul id="custom-cat-list" class="space-y-0.5"></ul>
 
-        <!-- Add category form -->
         <div id="add-cat-row" class="gap-1.5 mt-1">
           <button id="emoji-picker-btn" onclick="toggleEmojiPanel()" title="Pick emoji">📁</button>
           <input id="cat-name-input" type="text" maxlength="24"
@@ -204,12 +201,8 @@ background:#ffd6d6;
           <button id="save-cat-btn" onclick="saveCat()" title="Save">✓</button>
         </div>
 
-        <!-- Emoji quick picker -->
-        <div id="emoji-panel">
-          <!-- emojis injected by JS -->
-        </div>
+        <div id="emoji-panel"></div>
 
-        <!-- + Add button -->
         <button id="add-cat-btn" onclick="openAddCat()"
           class="mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-[#c8a96e]
                  hover:bg-[#f0e0cc] hover:text-[#8B6343] transition text-sm w-full">
@@ -223,7 +216,6 @@ background:#ffd6d6;
         <a href="upload.html"   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📤</span><span id="nav-upload">Upload</span></a>
       </div>
 
-      <!-- Logout -->
       <div class="px-5 pt-3 border-t border-[#e8d5be]">
         <button onclick="handleLogout()" id="btn-logout"
           class="w-full text-center text-xs text-[#b09070] hover:text-[#8B6343] transition py-2">
@@ -242,39 +234,23 @@ background:#ffd6d6;
       <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
     </button>
     <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343] tracking-wide">✦ Memories Wall</h1>
-<div class="flex items-center gap-2">
 
-<a href="login.html"
-class="text-xs px-3 py-1 rounded-full border border-[#c8a96e]
-text-[#8B6343] hover:bg-[#f0e0cc]">
-Login
-</a>
+    <div class="flex items-center gap-2">
+      <!-- [NEW] Auth links (shown when NOT logged in) -->
+      <div id="auth-links" class="flex items-center gap-2">
+        <a href="login.html"  class="text-xs px-3 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] hover:bg-[#f0e0cc]">Login</a>
+        <a href="signup.html" class="text-xs px-3 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] hover:bg-[#f0e0cc]">Sign up</a>
+      </div>
 
-<a href="signup.html"
-class="text-xs px-3 py-1 rounded-full border border-[#c8a96e]
-text-[#8B6343] hover:bg-[#f0e0cc]">
-Sign up
-</a>
-  <button id="lang-btn" onclick="toggleLang()"
+      <!-- [NEW] Avatar (shown when logged in) -->
+      <div id="user-avatar" class="user-avatar hidden" title=""></div>
+
+      <button id="lang-btn" onclick="toggleLang()"
         class="text-xs font-medium px-2.5 py-1 rounded-full border border-[#c8a96e]
                text-[#8B6343] bg-[#fdf6ec] hover:bg-[#f0e0cc] transition">VI</button>
-  // Avatar từ email
-const email = session.user.email;
-const avatar = document.getElementById("user-avatar");
-
-if (email) {
-  const letters = email.slice(0,2).toUpperCase();
-  avatar.textContent = letters;
-  avatar.classList.remove("hidden");
-}
-      <div id="user-avatar"
-class="hidden w-9 h-9 rounded-full bg-[#8B6343] text-white
-flex items-center justify-center text-sm font-bold">
-</div>
-
-<a href="upload.html"
-class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e]
-hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
+      <a href="upload.html"
+        class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e]
+               hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
     </div>
   </header>
 
@@ -301,7 +277,6 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
     function openMenu()  { document.getElementById('menu-overlay').classList.remove('hidden-menu'); }
     function closeMenu() { document.getElementById('menu-overlay').classList.add('hidden-menu'); }
 
-    // i18n
     const T = {
       en: { loading:'Loading memories…', empty:'No memories yet. Upload your first photo! 📷',
             footer:'Every photo tells a story ✦', menuTitle:'My Wall', navAll:'All Photos',
@@ -342,7 +317,7 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
     }
     applyLang();
 
-    // ── Emoji picker ──
+    // Emoji picker
     const EMOJIS = ['📁','🌸','🏖','🎵','🐾','🌍','🎂','⚽','🎨','🍜',
                     '📚','🏋','🌙','🎮','🐶','🌺','🎸','🏡','✈️','🎁'];
     const panel = document.getElementById('emoji-panel');
@@ -360,7 +335,6 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
       panel.classList.remove('open');
     }
     function toggleEmojiPanel() { panel.classList.toggle('open'); }
-
     function openAddCat() {
       document.getElementById('add-cat-row').classList.add('open');
       document.getElementById('add-cat-btn').style.display = 'none';
@@ -371,7 +345,7 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
   <!-- ══ Script module — Supabase + async ══ -->
   <script type="module">
     const { createClient } = supabase;
-    const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'); // 🔧 thay vào đây
+    const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
 
     window.handleLogout = async () => { await sb.auth.signOut(); location.href = 'login.html'; };
 
@@ -379,16 +353,17 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; }
     const userId = session.user.id;
-    <div id="user-avatar"
-class="hidden w-9 h-9 rounded-full bg-[#8B6343] text-white
-flex items-center justify-center text-sm font-bold">
-</div>
 
-<a href="upload.html"
-class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e]
-hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
+    // ── [FIX 1] Avatar: lấy 2 ký tự đầu của email ──────────────
+    const email    = session.user.email || '';
+    const initials = email.slice(0, 2).toUpperCase();
+    const avatarEl = document.getElementById('user-avatar');
+    avatarEl.textContent = initials;
+    avatarEl.title       = email;
+    avatarEl.classList.remove('hidden');
+    document.getElementById('auth-links').classList.add('hidden');
 
-    // ── Fairy lights ──
+    // Fairy lights
     const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#c7f2a4','#a8d8ea','#e2b4f7'];
     const bar = document.getElementById('fairy-lights-bar');
     for (let i = 0; i < Math.floor(window.innerWidth / 36) + 2; i++) {
@@ -398,7 +373,7 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
       bar.appendChild(b);
     }
 
-    // ── Load custom categories ────────────────────────────────────
+    // Load custom categories
     async function loadCategories() {
       document.getElementById('cat-loading').style.display = 'block';
       const { data: cats } = await sb
@@ -427,41 +402,29 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
       });
     }
 
-    // ── Save new category ─────────────────────────────────────────
     window.saveCat = async function() {
       const input = document.getElementById('cat-name-input');
       const name  = input.value.trim();
       if (!name) { input.focus(); return; }
-
       const emoji = window.chosenEmoji || '📁';
       const btn   = document.getElementById('save-cat-btn');
       btn.textContent = '…'; btn.disabled = true;
-
       const { data, error } = await sb.from('user_categories').insert({
-        user_id : userId,
-        name    : name,
-        emoji   : emoji,
+        user_id: userId, name, emoji
       }).select().single();
-
       btn.textContent = '✓'; btn.disabled = false;
-
       if (error) { alert('Error: ' + error.message); return; }
-
-      // Append to list immediately
       const list = document.getElementById('custom-cat-list');
       const li   = document.createElement('li');
       li.className  = 'custom-cat';
       li.dataset.id = data.id;
       li.innerHTML  = `
         <a href="hashtag.html?tag=${encodeURIComponent(data.name.toLowerCase())}">
-          <span>${data.emoji}</span>
-          <span>${data.name}</span>
+          <span>${data.emoji}</span><span>${data.name}</span>
         </a>
         <button class="del-btn" title="Delete" onclick="deleteCategory('${data.id}', this)">×</button>
       `;
       list.appendChild(li);
-
-      // Reset form
       input.value = '';
       window.chosenEmoji = '📁';
       document.getElementById('emoji-picker-btn').textContent = '📁';
@@ -470,7 +433,6 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
       document.getElementById('add-cat-btn').style.display = '';
     };
 
-    // ── Delete category ───────────────────────────────────────────
     window.deleteCategory = async function(id, btnEl) {
       if (!confirm('Delete this category?')) return;
       const { error } = await sb.from('user_categories').delete().eq('id', id);
@@ -478,15 +440,13 @@ hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
       btnEl.closest('li').remove();
     };
 
-    // Load categories after auth
     await loadCategories();
 
-    // ── Load photos ───────────────────────────────────────────────
-const { data: photos, error } = await sb
-  .from("photos")
-  .select("*")
-  .eq("user_id", userId)
-  .order("created_at", { ascending: false });
+    // Load photos
+    const { data: photos, error } = await sb
+      .from('photos').select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
     const loadingEl = document.getElementById('loading-state');
     const stripEl   = document.getElementById('scroll-strip');
@@ -497,32 +457,33 @@ const { data: photos, error } = await sb
       emptyEl.classList.remove('hidden');
     } else {
       stripEl.classList.remove('hidden');
+
+      // ── [FIX 2] Chống lặp ảnh: pad đủ 8 trước khi duplicate ──
+      const MIN_DISPLAY = 8;
+      let base = [...photos];
+      while (base.length < MIN_DISPLAY) base = [...base, ...photos];
+      const displayPhotos = [...base, ...base]; // duplicate for seamless loop
+
       const rots = [-4,-2,0,2,4,-3,3,-1,1];
-      photos.forEach((p, i) => {
+
+      displayPhotos.forEach((p, i) => {
         const rot  = rots[i % rots.length];
         const card = document.createElement('div');
         card.className = 'polaroid';
         card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
-       const note = p.note || "";
-const hashtags = note.match(/#\w+/g) || [];
 
-card.innerHTML = `
-  <div class="clip"></div>
+        // ── [FIX 3] Hashtags clickable ──
+        const tagHTML = (p.hashtags || []).slice(0, 3).map(tag =>
+          `<a href="hashtag.html?tag=${encodeURIComponent(tag.replace('#',''))}"
+              onclick="event.stopPropagation()">${tag}</a>`
+        ).join('');
 
-  <button class="delete-btn"
-    onclick="deletePhoto('${p.id}','${p.image_url}',event)">
-    ✕
-  </button>
-
-  <img src="${p.image_url}" alt="Memory" loading="lazy" draggable="false"/>
-
-  <p class="caption">
-    ${note.slice(0,28)}
-    ${hashtags.map(t =>
-      `<a href="hashtag.html?tag=${t.substring(1)}" style="color:#c8a96e"> ${t}</a>`
-    ).join("")}
-  </p>
-`;
+        card.innerHTML = `
+          <div class="clip"></div>
+          <img src="${p.image_url}" alt="${p.note || 'Memory'}" loading="lazy" draggable="false"/>
+          <p class="caption">${p.note ? p.note.slice(0,28) : '✦'}</p>
+          ${tagHTML ? `<div class="tag-row">${tagHTML}</div>` : ''}
+        `;
         card.onclick = () => location.href = `viewer.html?id=${p.id}`;
         stripEl.appendChild(card);
       });
@@ -541,16 +502,6 @@ card.innerHTML = `
       c.addEventListener('touchmove',  e => { c.scrollLeft=sl-(e.touches[0].pageX-sx)*1.4; }, {passive:true});
     }
   </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
 
 </body>
-
 </html>
-
-
-
-
-
-
