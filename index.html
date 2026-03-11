@@ -443,10 +443,14 @@ Sign up
     await loadCategories();
 
     // ── Load photos ───────────────────────────────────────────────
-    const { data: photos, error } = await sb
-      .from('photos').select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+const { data: userData } = await supabaseClient.auth.getUser()
+const user=userData.user
+
+const { data: photos } = await supabaseClient
+.from("photos")
+.select("*")
+.eq("user_id",user.id)
+.order("created_at",{ascending:false})
 
     const loadingEl = document.getElementById('loading-state');
     const stripEl   = document.getElementById('scroll-strip');
@@ -493,5 +497,6 @@ Sign up
 </body>
 
 </html>
+
 
 
