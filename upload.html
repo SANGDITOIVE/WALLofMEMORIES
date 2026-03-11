@@ -390,7 +390,7 @@
   <!-- ── Script module: Supabase + save ── -->
   <script type="module">
     const { createClient } = supabase;
-    const sb = createClient('SUPABASE_URL', 'SUPABASE_ANON_KEY'); // 🔧 thay vào đây
+    const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'); // 🔧 thay vào đây
 
     // Auth check
     const { data: { session } } = await sb.auth.getSession();
@@ -463,4 +463,5 @@
 </body>
 
 </html>
+
 
