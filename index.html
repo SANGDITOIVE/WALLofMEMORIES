@@ -241,6 +241,15 @@ Sign up
   <button id="lang-btn" onclick="toggleLang()"
         class="text-xs font-medium px-2.5 py-1 rounded-full border border-[#c8a96e]
                text-[#8B6343] bg-[#fdf6ec] hover:bg-[#f0e0cc] transition">VI</button>
+  // Avatar từ email
+const email = session.user.email;
+const avatar = document.getElementById("user-avatar");
+
+if (email) {
+  const letters = email.slice(0,2).toUpperCase();
+  avatar.textContent = letters;
+  avatar.classList.remove("hidden");
+}
       <a href="upload.html"
         class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e]
                hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
@@ -459,16 +468,25 @@ const { data: photos, error } = await sb
     } else {
       stripEl.classList.remove('hidden');
       const rots = [-4,-2,0,2,4,-3,3,-1,1];
-      [...photos, ...photos].forEach((p, i) => {
+      photos.forEach((p, i) => {
         const rot  = rots[i % rots.length];
         const card = document.createElement('div');
         card.className = 'polaroid';
         card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
-        card.innerHTML = `
-          <div class="clip"></div>
-          <img src="${p.image_url}" alt="${p.note || 'Memory'}" loading="lazy" draggable="false"/>
-          <p class="caption">${p.note ? p.note.slice(0,28) : '✦'}</p>
-        `;
+       const note = p.note || "";
+const hashtags = note.match(/#\w+/g) || [];
+
+card.innerHTML = `
+  <div class="clip"></div>
+  <img src="${p.image_url}" alt="Memory" loading="lazy" draggable="false"/>
+
+  <p class="caption">
+    ${note.slice(0,28)}
+    ${hashtags.map(t =>
+      `<a href="hashtag.html?tag=${t.substring(1)}" style="color:#c8a96e"> ${t}</a>`
+    ).join("")}
+  </p>
+`;
         card.onclick = () => location.href = `viewer.html?id=${p.id}`;
         stripEl.appendChild(card);
       });
@@ -494,6 +512,7 @@ const { data: photos, error } = await sb
 </body>
 
 </html>
+
 
 
 
