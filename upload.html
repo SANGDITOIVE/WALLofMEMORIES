@@ -368,11 +368,11 @@
       if (e.target.files[0]) loadPreview(e.target.files[0]);
     });
 
-    let selectedFile = null;
+    window.selectedFile = null;
     function loadPreview(file) {
       if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
       if (file.size > 10 * 1024 * 1024)   { showToast('File too large (max 10 MB).'); return; }
-      selectedFile = file;
+      window.selectedFile = file;;
       const url = URL.createObjectURL(file);
       document.getElementById('preview-img').src = url;
       document.getElementById('customizer').classList.remove('hidden');
@@ -462,6 +462,7 @@
 </body>
 
 </html>
+
 
 
 
