@@ -65,12 +65,21 @@ text-align:center;
 </div>
 
 <script>
-function createAccount(){
+
+async function createAccount(){
+
 const email=document.getElementById("email").value
 const password=document.getElementById("password").value
 
-signup(email,password)
+if(!email||!password){
+alert("Enter email and password")
+return
 }
+
+await signup(email,password)
+
+}
+
 </script>
 
 </body>
