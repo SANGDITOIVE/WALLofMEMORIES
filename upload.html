@@ -4,465 +4,352 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upload Memory – Memories Wall</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-
     * { box-sizing: border-box; }
     body { background: #f5ede0; font-family: 'Inter', sans-serif; }
 
-    /* ── Drop zone ── */
-    #drop-zone {
-      border: 2.5px dashed #c8a96e;
-      background: #fffdf7;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #drop-zone.dragover {
-      background: #fdf0d8;
-      border-color: #a07840;
-    }
+    #drop-zone { border: 2.5px dashed #c8a96e; background: #fffdf7; transition: background 0.2s, border-color 0.2s; }
+    #drop-zone.dragover { background: #fdf0d8; border-color: #a07840; }
 
-    /* ── Preview canvas area ── */
-    #preview-wrap {
-      position: relative;
-      display: inline-block;
-    }
-    #preview-img {
-      display: block;
-      max-width: 100%;
-      border-radius: 2px;
-    }
+    #preview-wrap { position: relative; display: inline-block; }
+    #preview-img { display: block; max-width: 100%; border-radius: 2px; }
 
-    /* ── Frame overlays ── */
-    .frame-polaroid #preview-img {
-      padding: 10px 10px 36px;
-      background: #fffdf7;
-      box-shadow: 3px 4px 14px rgba(0,0,0,0.2);
-    }
-    .frame-retro #preview-img {
-      border: 6px solid #8B6343;
-      box-shadow: inset 0 0 0 2px #f5ede0, 4px 4px 0 #6b4226;
-    }
-    .frame-modern #preview-img {
-      border: 3px solid #333;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-    }
-    .frame-christmas #preview-img {
-      border: 6px solid #c0392b;
-      box-shadow: 0 0 0 3px #27ae60, 0 6px 20px rgba(0,0,0,0.2);
-    }
-    .frame-valentine #preview-img {
-      border: 6px solid #e91e8c;
-      box-shadow: 0 0 12px 4px #f48fb188;
-    }
-    .frame-tet #preview-img {
-      border: 6px solid #e53935;
-      box-shadow: 0 0 0 3px #ffd600, 0 6px 20px rgba(0,0,0,0.2);
-    }
+    .frame-polaroid #preview-img { padding: 10px 10px 36px; background: #fffdf7; box-shadow: 3px 4px 14px rgba(0,0,0,0.2); }
+    .frame-retro #preview-img { border: 6px solid #8B6343; }
+    .frame-modern #preview-img { border: 3px solid #333; border-radius: 8px; }
+    .frame-christmas #preview-img { border: 6px solid #c0392b; box-shadow: 0 0 0 3px #27ae60; }
+    .frame-valentine #preview-img { border: 6px solid #e91e8c; box-shadow: 0 0 12px 4px #f48fb188; }
+    .frame-tet #preview-img { border: 6px solid #e53935; box-shadow: 0 0 0 3px #ffd600; }
 
-    /* ── Frame selector buttons ── */
-    .frame-btn {
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      border: 1.5px solid #c8a96e;
-      background: #fffdf7;
-      color: #6b5240;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .frame-btn:hover  { background: #f0e0cc; }
+    .frame-btn { padding: 6px 14px; border-radius: 20px; font-size: 13px; border: 1.5px solid #c8a96e; background: #fffdf7; color: #6b5240; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .frame-btn:hover { background: #f0e0cc; }
     .frame-btn.active { background: #c8a96e; color: #fff; border-color: #a07840; }
 
-    /* ── Sticker picker ── */
-    .sticker-btn {
-      font-size: 1.6rem;
-      padding: 6px 10px;
-      border-radius: 10px;
-      background: #fffdf7;
-      border: 1.5px solid #e8d5be;
-      cursor: pointer;
-      transition: transform 0.15s;
-    }
+    .sticker-btn { font-size: 1.6rem; padding: 6px 10px; border-radius: 10px; background: #fffdf7; border: 1.5px solid #e8d5be; cursor: pointer; transition: transform 0.15s; }
     .sticker-btn:hover { transform: scale(1.25); }
 
-    /* ── Stickers on preview ── */
-    .sticker-on-img {
-      position: absolute;
-      font-size: 1.8rem;
-      cursor: move;
-      user-select: none;
-      touch-action: none;
-      line-height: 1;
-    }
+    .sticker-on-img { position: absolute; font-size: 1.8rem; cursor: move; user-select: none; touch-action: none; line-height: 1; }
 
-    /* ── Hashtag pill ── */
-    .tag-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: #f0e0cc;
-      color: #6b5240;
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 13px;
-    }
-    .tag-pill button {
-      background: none;
-      border: none;
-      color: #a07840;
-      cursor: pointer;
-      font-size: 15px;
-      line-height: 1;
-      padding: 0;
-    }
+    .tag-pill { display: inline-flex; align-items: center; gap: 4px; background: #f0e0cc; color: #6b5240; border-radius: 20px; padding: 3px 10px; font-size: 13px; }
+    .tag-pill button { background: none; border: none; color: #a07840; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
 
-    /* ── Toast ── */
-    #toast {
-      position: fixed;
-      bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: #3d2b1f;
-      color: #fff;
-      padding: 10px 22px;
-      border-radius: 24px;
-      font-size: 14px;
-      transition: transform 0.3s ease;
-      z-index: 999;
-      white-space: nowrap;
-    }
+    /* Quick-tap hashtag chips */
+    .htag-chip { display: inline-block; background: #fffdf7; border: 1.5px solid #c8a96e; color: #8B6343; border-radius: 20px; padding: 3px 12px; font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: 'Caveat', cursive; }
+    .htag-chip:hover { background: #f0e0cc; }
+    .htag-chip.selected { background: #c8a96e; color: #fff; border-color: #a07840; }
+
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #3d2b1f; color: #fff; padding: 10px 22px; border-radius: 24px; font-size: 14px; transition: transform 0.3s ease; z-index: 999; white-space: nowrap; }
     #toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
-
 <body class="min-h-screen pb-16">
 
-  <!-- TOP BAR -->
-  <header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3
-                 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
-    <a href="index.html" class="text-[#8B6343] text-xl leading-none">&#8592;</a>
-    <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Upload Memory</h1>
-    <div class="w-6"></div>
-  </header>
+<header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
+  <a href="index.html" class="text-[#8B6343] text-xl leading-none">←</a>
+  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Upload Memory</h1>
+  <div class="w-6"></div>
+</header>
 
-  <main class="max-w-lg mx-auto px-4 pt-6 space-y-6">
+<main class="max-w-lg mx-auto px-4 pt-6 space-y-6">
 
-    <!-- STEP 1: Drop zone -->
+  <!-- STEP 1: Drop zone -->
+  <section>
+    <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">① Pick a photo</p>
+    <div id="drop-zone" class="rounded-2xl p-8 flex flex-col items-center justify-center gap-3 text-center cursor-pointer" onclick="document.getElementById('file-input').click()">
+      <span class="text-4xl">📷</span>
+      <p class="text-[#a07840] text-sm">Tap to choose or drag &amp; drop</p>
+      <p class="text-[#c8a96e] text-xs">JPG, PNG, WEBP — max 10 MB</p>
+    </div>
+    <input id="file-input" type="file" accept="image/*" class="hidden" />
+  </section>
+
+  <div id="customizer" class="hidden space-y-6">
+
+    <!-- Preview -->
     <section>
-      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">① Pick a photo</p>
-      <div
-        id="drop-zone"
-        class="rounded-2xl p-8 flex flex-col items-center justify-center gap-3 text-center cursor-pointer"
-        onclick="document.getElementById('file-input').click()"
-      >
-        <span class="text-4xl">📷</span>
-        <p class="text-[#a07840] text-sm">Tap to choose or drag &amp; drop</p>
-        <p class="text-[#c8a96e] text-xs">JPG, PNG, WEBP — max 10 MB</p>
+      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-3">② Preview</p>
+      <div class="flex justify-center">
+        <div id="preview-wrap">
+          <img id="preview-img" src="" alt="preview" class="max-h-72 w-auto" />
+        </div>
       </div>
-      <input id="file-input" type="file" accept="image/*" class="hidden" />
     </section>
 
-    <!-- PREVIEW + CUSTOMIZATION (hidden until image chosen) -->
-    <div id="customizer" class="hidden space-y-6">
+    <!-- FRAME -->
+    <section>
+      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">③ Frame</p>
+      <div class="flex flex-wrap gap-2">
+        <button class="frame-btn active" data-frame="none"      onclick="setFrame(this)">None</button>
+        <button class="frame-btn"        data-frame="polaroid"  onclick="setFrame(this)">Polaroid</button>
+        <button class="frame-btn"        data-frame="retro"     onclick="setFrame(this)">Retro</button>
+        <button class="frame-btn"        data-frame="modern"    onclick="setFrame(this)">Modern</button>
+        <button class="frame-btn"        data-frame="christmas" onclick="setFrame(this)">🎄 Christmas</button>
+        <button class="frame-btn"        data-frame="valentine" onclick="setFrame(this)">💝 Valentine</button>
+        <button class="frame-btn"        data-frame="tet"       onclick="setFrame(this)">🧧 Tết</button>
+      </div>
+    </section>
 
-      <!-- Preview -->
-      <section>
-        <p class="font-['Caveat'] text-lg text-[#8B6343] mb-3">② Preview</p>
-        <div class="flex justify-center">
-          <div id="preview-wrap">
-            <img id="preview-img" src="" alt="preview" class="max-h-72 w-auto" />
-            <!-- stickers injected here -->
-          </div>
-        </div>
-      </section>
+    <!-- STICKERS -->
+    <section>
+      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">④ Stickers</p>
+      <div class="flex gap-3 flex-wrap">
+        <button class="sticker-btn" onclick="addSticker('❤️')">❤️</button>
+        <button class="sticker-btn" onclick="addSticker('⭐')">⭐</button>
+        <button class="sticker-btn" onclick="addSticker('✨')">✨</button>
+        <button class="sticker-btn" onclick="addSticker('✈️')">✈️</button>
+        <button class="sticker-btn" onclick="addSticker('🌸')">🌸</button>
+        <button class="sticker-btn" onclick="addSticker('🎵')">🎵</button>
+        <button class="sticker-btn" onclick="addSticker('📍')">📍</button>
+        <button class="sticker-btn" onclick="addSticker('🌙')">🌙</button>
+      </div>
+      <p class="text-xs text-[#b09070] mt-1">Tap to add · drag to reposition</p>
+    </section>
 
-      <!-- FRAME selector -->
-      <section>
-        <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">③ Frame</p>
-        <div class="flex flex-wrap gap-2">
-          <button class="frame-btn active" data-frame="none"      onclick="setFrame(this)">None</button>
-          <button class="frame-btn"        data-frame="polaroid"  onclick="setFrame(this)">Polaroid</button>
-          <button class="frame-btn"        data-frame="retro"     onclick="setFrame(this)">Retro</button>
-          <button class="frame-btn"        data-frame="modern"    onclick="setFrame(this)">Modern</button>
-          <button class="frame-btn"        data-frame="christmas" onclick="setFrame(this)">🎄 Christmas</button>
-          <button class="frame-btn"        data-frame="valentine" onclick="setFrame(this)">💝 Valentine</button>
-          <button class="frame-btn"        data-frame="tet"       onclick="setFrame(this)">🧧 Tết</button>
-        </div>
-      </section>
+    <!-- NOTE -->
+    <section>
+      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">⑤ Note</p>
+      <textarea id="note-input" rows="3" maxlength="200" placeholder="Write something about this memory…"
+        class="w-full rounded-xl border border-[#e8d5be] bg-[#fffdf7] px-4 py-3 text-sm text-[#6b5240] placeholder-[#c8a96e] resize-none focus:outline-none focus:border-[#c8a96e]"></textarea>
+    </section>
 
-      <!-- STICKERS -->
-      <section>
-        <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">④ Stickers</p>
-        <div class="flex gap-3 flex-wrap">
-          <button class="sticker-btn" onclick="addSticker('❤️')">❤️</button>
-          <button class="sticker-btn" onclick="addSticker('⭐')">⭐</button>
-          <button class="sticker-btn" onclick="addSticker('✨')">✨</button>
-          <button class="sticker-btn" onclick="addSticker('✈️')">✈️</button>
-          <button class="sticker-btn" onclick="addSticker('🌸')">🌸</button>
-          <button class="sticker-btn" onclick="addSticker('🎵')">🎵</button>
-          <button class="sticker-btn" onclick="addSticker('📍')">📍</button>
-          <button class="sticker-btn" onclick="addSticker('🌙')">🌙</button>
-        </div>
-        <p class="text-xs text-[#b09070] mt-1">Tap a sticker to add · drag to reposition</p>
-      </section>
+    <!-- DATE (optional) -->
+    <section>
+      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">⑥ Date <span class="text-[#b09070] text-sm font-sans">(optional)</span></p>
+      <div class="flex gap-2 items-center">
+        <input id="date-day"   type="number" min="1" max="31" placeholder="DD"   class="w-16 rounded-xl border border-[#e8d5be] bg-[#fffdf7] px-3 py-2 text-sm text-[#6b5240] text-center focus:outline-none focus:border-[#c8a96e]" />
+        <span class="text-[#c8a96e]">/</span>
+        <input id="date-month" type="number" min="1" max="12" placeholder="MM"   class="w-16 rounded-xl border border-[#e8d5be] bg-[#fffdf7] px-3 py-2 text-sm text-[#6b5240] text-center focus:outline-none focus:border-[#c8a96e]" />
+        <span class="text-[#c8a96e]">/</span>
+        <input id="date-year"  type="number" min="2000" max="2099" placeholder="YYYY" class="w-24 rounded-xl border border-[#e8d5be] bg-[#fffdf7] px-3 py-2 text-sm text-[#6b5240] text-center focus:outline-none focus:border-[#c8a96e]" />
+      </div>
+      <p class="text-xs text-[#b09070] mt-1">Leave blank to skip</p>
+    </section>
 
-      <!-- NOTE -->
-      <section>
-        <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">⑤ Note</p>
-        <textarea
-          id="note-input"
-          rows="3"
-          maxlength="200"
-          placeholder="Write something about this memory…"
-          class="w-full rounded-xl border border-[#e8d5be] bg-[#fffdf7] px-4 py-3
-                 text-sm text-[#6b5240] placeholder-[#c8a96e] resize-none
-                 focus:outline-none focus:border-[#c8a96e]"
-        ></textarea>
-      </section>
+    <!-- HASHTAGS -->
+    <section>
+      <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">⑦ Hashtags</p>
 
-      <!-- HASHTAGS -->
-      <section>
-        <p class="font-['Caveat'] text-lg text-[#8B6343] mb-2">⑥ Hashtags</p>
-        <div id="tag-list" class="flex flex-wrap gap-2 mb-2"></div>
-        <div class="flex gap-2">
-          <input
-            id="tag-input"
-            type="text"
-            placeholder="#family"
-            maxlength="30"
-            class="flex-1 rounded-xl border border-[#e8d5be] bg-[#fffdf7] px-4 py-2
-                   text-sm text-[#6b5240] placeholder-[#c8a96e]
-                   focus:outline-none focus:border-[#c8a96e]"
-            onkeydown="handleTagKey(event)"
-          />
-          <button
-            onclick="addTagFromInput()"
-            class="px-4 py-2 rounded-xl bg-[#c8a96e] text-white text-sm hover:bg-[#a07840] transition"
-          >Add</button>
-        </div>
-        <p class="text-xs text-[#b09070] mt-1">Press Enter or tap Add</p>
-      </section>
+      <!-- Quick-tap: existing hashtags -->
+      <div id="existing-tags-wrap" class="mb-3 hidden">
+        <p class="text-xs text-[#b09070] mb-2">Tap to add:</p>
+        <div id="existing-tags-chips" class="flex flex-wrap gap-2"></div>
+      </div>
 
-      <!-- SAVE BUTTON -->
-      <button
-        id="save-btn"
-        onclick="saveMemory()"
-        class="w-full py-4 rounded-2xl bg-[#8B6343] hover:bg-[#6b4226] text-white
-               font-['Caveat'] text-xl tracking-wide transition active:scale-95"
-      >
-        Save Memory ✦
-      </button>
+      <div id="tag-list" class="flex flex-wrap gap-2 mb-2"></div>
+      <div class="flex gap-2">
+        <input id="tag-input" type="text" placeholder="#family" maxlength="30"
+          class="flex-1 rounded-xl border border-[#e8d5be] bg-[#fffdf7] px-4 py-2 text-sm text-[#6b5240] placeholder-[#c8a96e] focus:outline-none focus:border-[#c8a96e]"
+          onkeydown="handleTagKey(event)" />
+        <button onclick="addTagFromInput()" class="px-4 py-2 rounded-xl bg-[#c8a96e] text-white text-sm hover:bg-[#a07840] transition">Add</button>
+      </div>
+      <p class="text-xs text-[#b09070] mt-1">Press Enter or tap Add</p>
+    </section>
 
-    </div><!-- /customizer -->
-  </main>
+    <!-- SAVE -->
+    <button id="save-btn" onclick="saveMemory()"
+      class="w-full py-4 rounded-2xl bg-[#8B6343] hover:bg-[#6b4226] text-white font-['Caveat'] text-xl tracking-wide transition active:scale-95">
+      Save Memory ✦
+    </button>
+  </div>
+</main>
 
-  <!-- TOAST -->
-  <div id="toast"></div>
-
-  <!-- ── Script thường: UI helpers ── -->
-  <script>
-    let currentFrame = 'none';
-    const tags = [];
-
-    // Frame
-    function setFrame(btn) {
-      document.querySelectorAll('.frame-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFrame = btn.dataset.frame;
-      const wrap = document.getElementById('preview-wrap');
-      wrap.className = 'frame-' + currentFrame;
-    }
-
-    // Stickers (drag on desktop, touch on mobile)
-    function addSticker(emoji) {
-      const wrap = document.getElementById('preview-wrap');
-      const el   = document.createElement('span');
-      el.className   = 'sticker-on-img';
-      el.textContent = emoji;
-      el.style.left  = (30 + Math.random() * 60) + '%';
-      el.style.top   = (20 + Math.random() * 50) + '%';
-
-      // Mouse drag
-      el.addEventListener('mousedown', e => {
-        e.preventDefault();
-        const rect = wrap.getBoundingClientRect();
-        const ox = e.clientX - el.getBoundingClientRect().left;
-        const oy = e.clientY - el.getBoundingClientRect().top;
-        const onMove = ev => {
-          el.style.left = ((ev.clientX - rect.left - ox) / rect.width  * 100) + '%';
-          el.style.top  = ((ev.clientY - rect.top  - oy) / rect.height * 100) + '%';
-        };
-        const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
-      });
-
-      // Touch drag
-      el.addEventListener('touchstart', e => {
-        e.preventDefault();
-        const rect  = wrap.getBoundingClientRect();
-        const touch = e.touches[0];
-        const ox = touch.clientX - el.getBoundingClientRect().left;
-        const oy = touch.clientY - el.getBoundingClientRect().top;
-        const onMove = ev => {
-          const t = ev.touches[0];
-          el.style.left = ((t.clientX - rect.left - ox) / rect.width  * 100) + '%';
-          el.style.top  = ((t.clientY - rect.top  - oy) / rect.height * 100) + '%';
-        };
-        const onEnd = () => { el.removeEventListener('touchmove', onMove); el.removeEventListener('touchend', onEnd); };
-        el.addEventListener('touchmove', onMove, {passive: false});
-        el.addEventListener('touchend', onEnd);
-      }, {passive: false});
-
-      wrap.appendChild(el);
-    }
-
-    // Hashtags
-    function renderTags() {
-      const list = document.getElementById('tag-list');
-      list.innerHTML = '';
-      tags.forEach((tag, i) => {
-        const pill = document.createElement('span');
-        pill.className = 'tag-pill';
-        pill.innerHTML = `${tag} <button onclick="removeTag(${i})">×</button>`;
-        list.appendChild(pill);
-      });
-    }
-    function addTag(raw) {
-      let t = raw.trim().replace(/\s+/g, '').toLowerCase();
-      if (!t) return;
-      if (!t.startsWith('#')) t = '#' + t;
-      if (!tags.includes(t)) { tags.push(t); renderTags(); }
-    }
-    function removeTag(i) { tags.splice(i, 1); renderTags(); }
-    function addTagFromInput() {
-      const inp = document.getElementById('tag-input');
-      addTag(inp.value); inp.value = '';
-    }
-    function handleTagKey(e) { if (e.key === 'Enter') { e.preventDefault(); addTagFromInput(); } }
-
-    // Toast
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2800);
-    }
-
-    // Drag & drop
-    const dz = document.getElementById('drop-zone');
-    dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('dragover'); });
-    dz.addEventListener('dragleave', ()  => dz.classList.remove('dragover'));
-    dz.addEventListener('drop', e => {
-      e.preventDefault();
-      dz.classList.remove('dragover');
-      const file = e.dataTransfer.files[0];
-      if (file) loadPreview(file);
-    });
-    document.getElementById('file-input').addEventListener('change', e => {
-      if (e.target.files[0]) loadPreview(e.target.files[0]);
-    });
-
-    window.selectedFile = null;
-    function loadPreview(file) {
-      if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
-      if (file.size > 10 * 1024 * 1024)   { showToast('File too large (max 10 MB).'); return; }
-      window.selectedFile = file;;
-      const url = URL.createObjectURL(file);
-      document.getElementById('preview-img').src = url;
-      document.getElementById('customizer').classList.remove('hidden');
-      document.getElementById('drop-zone').classList.add('hidden');
-      document.getElementById('customizer').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // Auto-tag from ?category=xxx
-    window.addEventListener('DOMContentLoaded', () => {
-      const cat = new URLSearchParams(location.search).get('category');
-      if (cat) addTag('#' + cat);
-    });
-  </script>
-
-  <!-- ── Script module: Supabase + save ── -->
-  <script type="module">
-   
-    const sb = supabaseClient
-    
-    // Auth check
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; }
-    const userId = session.user.id;
-
-    // Save memory
-    window.saveMemory = async function () {
-      if (!window.selectedFile) { showToast('Please pick a photo first!'); return; }
-
-      const btn = document.getElementById('save-btn');
-      btn.disabled    = true;
-      btn.textContent = 'Saving…';
-
-      try {
-        // 1. Upload to Supabase Storage
-        const ext      = window.selectedFile.name.split('.').pop() || 'jpg';
-        const photoId  = crypto.randomUUID();
-        const path     = `users/${userId}/${photoId}.${ext}`;
-
-        const { error: upErr } = await sb.storage
-          .from('memories')
-          .upload(path, window.selectedFile, { contentType: window.selectedFile.type });
-        if (upErr) throw upErr;
-
-        // 2. Get public URL
-        const { data: { publicUrl } } = sb.storage.from('memories').getPublicUrl(path);
-
-        // 3. Collect metadata
-        const note     = document.getElementById('note-input').value.trim();
-        const category = new URLSearchParams(location.search).get('category') || null;
-        const frame    = window.currentFrame === 'none' ? null : window.currentFrame;
-
-        // Collect sticker positions
-        const stickerEls = document.querySelectorAll('.sticker-on-img');
-        const stickers   = Array.from(stickerEls).map(s => ({
-          emoji: s.textContent,
-          left:  s.style.left,
-          top:   s.style.top
-        }));
-
-        // 4. Insert into photos table
-        const { error: dbErr } = await sb.from('photos').insert({
-          user_id  : userId,
-          image_url: publicUrl,
-          note     : note || null,
-          hashtags : window.tags,
-          category : category,
-          frame    : frame,
-          stickers : stickers.length ? stickers : null,
-        });
-        if (dbErr) throw dbErr;
-
-        showToast('Memory saved! ✦');
-        setTimeout(() => window.location.href = 'index.html', 1600);
-
-      } catch (err) {
-        console.error(err);
-        showToast('Error: ' + (err.message || 'Something went wrong.'));
-        btn.disabled    = false;
-        btn.textContent = 'Save Memory ✦';
-      }
-    };
-  </script>
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
+<div id="toast"></div>
 
 <script>
+  let currentFrame = 'none';
+  const tags = [];
+
+  function setFrame(btn) {
+    document.querySelectorAll('.frame-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFrame = btn.dataset.frame;
+    document.getElementById('preview-wrap').className = 'frame-' + currentFrame;
+  }
+
+  function addSticker(emoji) {
+    const wrap = document.getElementById('preview-wrap');
+    const el = document.createElement('span');
+    el.className = 'sticker-on-img';
+    el.textContent = emoji;
+    el.style.left = (30 + Math.random() * 60) + '%';
+    el.style.top  = (20 + Math.random() * 50) + '%';
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const rect = wrap.getBoundingClientRect();
+      const ox = e.clientX - el.getBoundingClientRect().left;
+      const oy = e.clientY - el.getBoundingClientRect().top;
+      const onMove = ev => { el.style.left = ((ev.clientX-rect.left-ox)/rect.width*100)+'%'; el.style.top = ((ev.clientY-rect.top-oy)/rect.height*100)+'%'; };
+      const onUp = () => { document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); };
+      document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
+    });
+    el.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const rect = wrap.getBoundingClientRect(); const touch = e.touches[0];
+      const ox = touch.clientX - el.getBoundingClientRect().left;
+      const oy = touch.clientY - el.getBoundingClientRect().top;
+      const onMove = ev => { const t=ev.touches[0]; el.style.left=((t.clientX-rect.left-ox)/rect.width*100)+'%'; el.style.top=((t.clientY-rect.top-oy)/rect.height*100)+'%'; };
+      const onEnd = () => { el.removeEventListener('touchmove',onMove); el.removeEventListener('touchend',onEnd); };
+      el.addEventListener('touchmove',onMove,{passive:false}); el.addEventListener('touchend',onEnd);
+    }, {passive:false});
+    wrap.appendChild(el);
+  }
+
+  function renderTags() {
+    const list = document.getElementById('tag-list');
+    list.innerHTML = '';
+    tags.forEach((tag, i) => {
+      const pill = document.createElement('span');
+      pill.className = 'tag-pill';
+      pill.innerHTML = `${tag} <button onclick="removeTag(${i})">×</button>`;
+      list.appendChild(pill);
+    });
+  }
+  function addTag(raw) {
+    let t = raw.trim().replace(/\s+/g,'').toLowerCase();
+    if (!t) return;
+    if (!t.startsWith('#')) t = '#' + t;
+    if (!tags.includes(t)) { tags.push(t); renderTags(); syncChipStates(); }
+  }
+  function removeTag(i) { tags.splice(i,1); renderTags(); syncChipStates(); }
+  function addTagFromInput() { const inp = document.getElementById('tag-input'); addTag(inp.value); inp.value = ''; }
+  function handleTagKey(e) { if (e.key==='Enter') { e.preventDefault(); addTagFromInput(); } }
+
+  function syncChipStates() {
+    document.querySelectorAll('.htag-chip').forEach(chip => {
+      chip.classList.toggle('selected', tags.includes(chip.dataset.tag));
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files[0]) loadPreview(e.dataTransfer.files[0]); });
+  document.getElementById('file-input').addEventListener('change', e => { if (e.target.files[0]) loadPreview(e.target.files[0]); });
+
+  window.selectedFile = null;
+  function loadPreview(file) {
+    if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+    if (file.size > 10*1024*1024) { showToast('File too large (max 10 MB).'); return; }
+    window.selectedFile = file;
+    document.getElementById('preview-img').src = URL.createObjectURL(file);
+    document.getElementById('customizer').classList.remove('hidden');
+    document.getElementById('drop-zone').classList.add('hidden');
+    document.getElementById('customizer').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const cat = new URLSearchParams(location.search).get('category');
+    if (cat) addTag('#' + cat);
+  });
+</script>
+
+<script type="module">
+  const { createClient } = supabase;
+  const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; }
+  const userId = session.user.id;
+
+  // Load existing hashtags for quick-tap
+  const { data: prevPhotos } = await sb.from('photos').select('hashtags').eq('user_id', userId);
+  const existingTags = new Set(['#family','#friends','#travel','#food','#couple']);
+  (prevPhotos || []).forEach(p => (p.hashtags || []).forEach(t => existingTags.add(t)));
+
+  if (existingTags.size) {
+    const wrap = document.getElementById('existing-tags-wrap');
+    const chipsContainer = document.getElementById('existing-tags-chips');
+    wrap.classList.remove('hidden');
+    [...existingTags].sort().forEach(tag => {
+      const chip = document.createElement('button');
+      chip.className = 'htag-chip';
+      chip.textContent = tag;
+      chip.dataset.tag = tag;
+      chip.onclick = () => {
+        if (window.tags.includes(tag)) {
+          const idx = window.tags.indexOf(tag);
+          window.removeTag(idx);
+        } else {
+          window.addTag(tag);
+        }
+      };
+      chipsContainer.appendChild(chip);
+    });
+  }
+
+  // Make tag helpers accessible from module
+  window.addTag = window.addTag || (raw => {
+    let t = raw.trim().replace(/\s+/g,'').toLowerCase();
+    if (!t) return;
+    if (!t.startsWith('#')) t = '#' + t;
+    if (!window.tags.includes(t)) { window.tags.push(t); window.renderTags(); window.syncChipStates(); }
+  });
+
+  // Save memory
+  window.saveMemory = async function() {
+    if (!window.selectedFile) { showToast('Please pick a photo first!'); return; }
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      const ext = window.selectedFile.name.split('.').pop() || 'jpg';
+      const photoId = crypto.randomUUID();
+      const path = `users/${userId}/${photoId}.${ext}`;
+
+      const { error: upErr } = await sb.storage.from('memories').upload(path, window.selectedFile, { contentType: window.selectedFile.type });
+      if (upErr) throw upErr;
+
+      const { data: { publicUrl } } = sb.storage.from('memories').getPublicUrl(path);
+      const note     = document.getElementById('note-input').value.trim();
+      const category = new URLSearchParams(location.search).get('category') || null;
+      const frame    = window.currentFrame === 'none' ? null : window.currentFrame;
+
+      const stickerEls = document.querySelectorAll('.sticker-on-img');
+      const stickers   = Array.from(stickerEls).map(s => ({ emoji: s.textContent, left: s.style.left, top: s.style.top }));
+
+      // Build photo_date from DD/MM/YYYY inputs
+      const day   = document.getElementById('date-day').value;
+      const month = document.getElementById('date-month').value;
+      const year  = document.getElementById('date-year').value;
+      let photoDate = null;
+      if (day && month && year) {
+        const d = parseInt(day), m = parseInt(month), y = parseInt(year);
+        if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 2000) {
+          photoDate = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        }
+      }
+
+      const { error: dbErr } = await sb.from('photos').insert({
+        user_id  : userId,
+        image_url: publicUrl,
+        note     : note || null,
+        hashtags : window.tags,
+        category : category,
+        frame    : frame,
+        stickers : stickers.length ? stickers : null,
+        photo_date: photoDate,
+      });
+      if (dbErr) throw dbErr;
+
+      showToast('Memory saved! ✦');
+      setTimeout(() => window.location.href = 'index.html', 1600);
+
+    } catch (err) {
+      console.error(err);
+      showToast('Error: ' + (err.message || 'Something went wrong.'));
+      btn.disabled = false; btn.textContent = 'Save Memory ✦';
+    }
+  };
+</script>
 </body>
-
 </html>
-
-
-
-
