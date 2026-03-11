@@ -1,94 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Couple Album – Memories Wall</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-    * { box-sizing: border-box; }
-    body { background: #f5ede0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Couple Album – Memories Wall</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
+* { box-sizing: border-box; }
+body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; overflow-x:hidden; }
 
-    .fairy-lights { position: relative; width: 100%; height: 28px; overflow: hidden; }
-    .fairy-lights::before { content: ''; position: absolute; top: 12px; left: 0; right: 0; height: 1.5px; background: repeating-linear-gradient(to right, #e91e8c 0px, #e91e8c 18px, transparent 18px, transparent 36px); }
-    .bulb { position: absolute; top: 8px; width: 9px; height: 13px; border-radius: 50% 50% 45% 45%; animation: glow 2.2s ease-in-out infinite alternate; }
-    @keyframes glow { from { opacity: 0.5; filter: blur(0.5px); } to { opacity: 1; filter: blur(1.5px); } }
+.fairy-lights { position:relative; width:100%; height:28px; overflow:hidden; }
+.fairy-lights::before { content:''; position:absolute; top:12px; left:0; right:0; height:1.5px; background:repeating-linear-gradient(to right,#e91e8c 0,#e91e8c 18px,transparent 18px,transparent 36px); }
+.bulb { position:absolute; top:8px; width:9px; height:13px; border-radius:50% 50% 45% 45%; animation:glow 2.2s ease-in-out infinite alternate; }
+@keyframes glow { from{opacity:.5;filter:blur(.5px)} to{opacity:1;filter:blur(1.5px)} }
 
-    .rope { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(to right, #8B6343, #e91e8c55, #8B6343); border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.rope { position:absolute; left:0; right:0; height:4px; top:0; background:repeating-linear-gradient(to right,#7a5230,#e91e8c66 40%,#a0673a 60%,#7a5230); border-radius:2px; box-shadow:0 2px 4px rgba(0,0,0,.3); }
 
-    .wall-row { position: relative; width: 100%; min-height: 220px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
-    .wall-row::-webkit-scrollbar { display: none; }
-    .scroll-strip { display: flex; gap: 2rem; padding: 2.5rem 2rem 1.5rem; width: max-content; cursor: grab; user-select: none; }
-    .scroll-strip:active { cursor: grabbing; }
+.wall-row { position:relative; overflow:hidden; width:100%; }
+.scroll-strip { display:flex; gap:2rem; padding:26px 2rem 1rem; width:max-content; will-change:transform; cursor:grab; user-select:none; }
+.scroll-strip:active { cursor:grabbing; }
 
-    .polaroid { background: #fffdf7; padding: 10px 10px 30px; box-shadow: 3px 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.1); border-radius: 2px; flex-shrink: 0; width: 160px; position: relative; transition: transform 0.25s ease, box-shadow 0.25s ease; cursor: pointer; }
-    .polaroid:hover { box-shadow: 6px 10px 28px rgba(233,30,140,0.22); }
-    .polaroid img { width: 100%; height: 140px; object-fit: cover; display: block; border-radius: 1px; }
-    .polaroid .caption { font-family: 'Caveat', cursive; font-size: 13px; color: #6b5240; text-align: center; margin-top: 6px; line-height: 1.3; min-height: 18px; }
+.polaroid { background:#fffdf7; padding:10px 10px 30px; box-shadow:3px 4px 14px rgba(0,0,0,.18); border-radius:2px; flex-shrink:0; width:155px; position:relative; cursor:pointer; }
+.polaroid:hover { box-shadow:6px 10px 28px rgba(233,30,140,.22); }
+.polaroid img { width:100%; height:130px; object-fit:cover; display:block; border-radius:1px; }
+.polaroid .caption { font-family:'Caveat',cursive; font-size:13px; color:#6b5240; text-align:center; margin-top:6px; line-height:1.3; }
 
-    .clip { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 14px; height: 22px; background: linear-gradient(to bottom, #a0714f, #7a5335); border-radius: 3px 3px 2px 2px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.3); }
-    .clip::after { content: ''; position: absolute; top: 7px; left: 2px; right: 2px; height: 2px; background: rgba(0,0,0,0.2); border-radius: 1px; }
+.pin { position:absolute; top:-22px; left:50%; transform:translateX(-50%); width:12px; height:22px; z-index:2; }
+.pin-head { width:12px; height:12px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#f9c0d0,#c2185b); box-shadow:0 2px 4px rgba(0,0,0,.4); }
+.pin-body { width:4px; height:12px; margin:0 auto; background:linear-gradient(to bottom,#e91e8c,#880e4f); border-radius:0 0 3px 3px; }
 
-    #upload-modal { transition: opacity 0.25s ease; }
-    #upload-modal.hidden { opacity: 0; pointer-events: none; }
-    #drop-zone { border: 2.5px dashed #e91e8c88; background: #fffdf7; transition: background 0.2s, border-color 0.2s; }
-    #drop-zone.dragover { background: #fdf0f6; border-color: #e91e8c; }
+/* Day counter */
+#day-counter-box { background:linear-gradient(135deg,#fffdf7,#fce4ec); border:1.5px solid #f8bbd0; border-radius:20px; }
 
-    .tag-pill { display: inline-flex; align-items: center; gap: 4px; background: #fce4ec; color: #880e4f; border-radius: 20px; padding: 3px 10px; font-size: 13px; }
-    .tag-pill button { background: none; border: none; color: #c2185b; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
+.invite-box { background:linear-gradient(135deg,#fffdf7,#fce4ec); border:1.5px solid #f8bbd0; border-radius:20px; padding:24px; }
+.avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#e91e8c,#c8a96e); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Caveat',cursive; font-size:16px; font-weight:600; flex-shrink:0; }
 
-    .invite-box { background: linear-gradient(135deg, #fffdf7, #fce4ec); border: 1.5px solid #f8bbd0; border-radius: 20px; padding: 24px; }
+/* Upload modal */
+#upload-modal { transition:opacity .25s ease; }
+#upload-modal.hidden { opacity:0; pointer-events:none; }
+#drop-zone { border:2.5px dashed #e91e8c88; background:#fffdf7; transition:background .2s,border-color .2s; }
+#drop-zone.dragover { background:#fdf0f6; border-color:#e91e8c; }
+.tag-pill { display:inline-flex; align-items:center; gap:4px; background:#fce4ec; color:#880e4f; border-radius:20px; padding:3px 10px; font-size:13px; }
+.tag-pill button { background:none; border:none; color:#c2185b; cursor:pointer; font-size:15px; line-height:1; padding:0; }
 
-    .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #e91e8c, #c8a96e); display: flex; align-items: center; justify-content: center; color: #fff; font-family: 'Caveat', cursive; font-size: 16px; font-weight: 600; flex-shrink: 0; }
+.skeleton { background:linear-gradient(90deg,#f8bbd0 25%,#fce4ec 50%,#f8bbd0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* Day counter banner */
-    #day-counter-banner { background: linear-gradient(135deg, #fce4ec, #fff9c4); border: 1.5px solid #f8bbd0; border-radius: 16px; padding: 12px 20px; text-align: center; }
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:#3d2b1f; color:#fff; padding:10px 22px; border-radius:24px; font-size:14px; z-index:999; transition:transform .3s ease; white-space:nowrap; }
+#toast.show { transform:translateX(-50%) translateY(0); }
 
-    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #3d2b1f; color: #fff; padding: 10px 22px; border-radius: 24px; font-size: 14px; z-index: 999; transition: transform 0.3s ease; white-space: nowrap; }
-    #toast.show { transform: translateX(-50%) translateY(0); }
-
-    .skeleton { background: linear-gradient(90deg, #f8bbd0 25%, #fce4ec 50%, #f8bbd0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-  </style>
+.ann-input { border:1.5px solid #f8bbd0; background:#fffdf7; border-radius:10px; padding:8px 14px; font-size:14px; color:#6b5240; font-family:'Be Vietnam Pro',sans-serif; outline:none; }
+.ann-input:focus { border-color:#e91e8c; }
+</style>
 </head>
 <body class="min-h-screen">
 
-<!-- UPLOAD MODAL -->
+<!-- Upload Modal -->
 <div id="upload-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center">
   <div class="absolute inset-0 bg-black/40" onclick="closeUpload()"></div>
   <div class="relative z-10 w-full max-w-lg bg-[#fdf6ec] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[92dvh] overflow-y-auto">
     <div class="flex items-center justify-between">
-      <p class="font-['Caveat'] text-2xl text-[#e91e8c]">💝 Add Memory</p>
+      <p class="font-['Caveat'] text-2xl text-[#e91e8c]">💝 Thêm kỷ niệm</p>
       <button onclick="closeUpload()" class="text-[#b09070] text-2xl leading-none">×</button>
     </div>
     <div id="drop-zone" class="rounded-2xl p-6 flex flex-col items-center gap-2 text-center cursor-pointer" onclick="document.getElementById('file-input').click()">
       <span class="text-3xl">📷</span>
-      <p class="text-sm text-[#a07840]">Tap to choose or drag &amp; drop</p>
+      <p class="text-sm text-[#a07840]">Nhấn để chọn hoặc kéo thả ảnh</p>
     </div>
     <input id="file-input" type="file" accept="image/*" class="hidden" />
-    <div id="modal-preview-wrap" class="hidden">
-      <img id="modal-preview" src="" class="w-full rounded-xl max-h-52 object-cover" />
-    </div>
-    <textarea id="modal-note" rows="2" maxlength="200" placeholder="Write a note…"
-      class="w-full rounded-xl border border-[#f8bbd0] bg-[#fffdf7] px-4 py-3 text-sm text-[#6b5240] placeholder-[#e8a0b4] resize-none focus:outline-none focus:border-[#e91e8c]"></textarea>
+    <div id="modal-preview-wrap" class="hidden"><img id="modal-preview" src="" class="w-full rounded-xl max-h-52 object-cover" /></div>
+    <textarea id="modal-note" rows="2" maxlength="200" placeholder="Ghi chú…" class="w-full rounded-xl border border-[#f8bbd0] bg-[#fffdf7] px-4 py-3 text-sm text-[#6b5240] placeholder-[#e8a0b4] resize-none focus:outline-none focus:border-[#e91e8c]"></textarea>
     <div>
       <div id="modal-tag-list" class="flex flex-wrap gap-2 mb-2"></div>
       <div class="flex gap-2">
         <input id="modal-tag-input" type="text" placeholder="#couple" maxlength="30"
           class="flex-1 rounded-xl border border-[#f8bbd0] bg-[#fffdf7] px-3 py-2 text-sm text-[#6b5240] placeholder-[#e8a0b4] focus:outline-none focus:border-[#e91e8c]"
           onkeydown="if(event.key==='Enter'){event.preventDefault();addModalTag();}" />
-        <button onclick="addModalTag()" class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition">Add</button>
+        <button onclick="addModalTag()" class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition">Thêm</button>
       </div>
     </div>
     <button id="modal-save-btn" onclick="saveCouplPhoto()"
       class="w-full py-3 rounded-2xl bg-[#e91e8c] hover:bg-[#c2185b] text-white font-['Caveat'] text-xl transition active:scale-95">
-      Save Memory 💝
+      Lưu kỷ niệm 💝
     </button>
   </div>
 </div>
 
+<!-- Top bar -->
 <header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#f8bbd0]">
   <a href="index.html" class="text-[#e91e8c] text-xl">←</a>
   <h1 class="font-['Caveat'] text-xl font-semibold text-[#e91e8c]">💝 Couple Album</h1>
@@ -97,6 +97,7 @@
 </header>
 
 <main class="max-w-lg mx-auto pb-16">
+  <!-- Loading -->
   <div id="loading-state" class="px-4 pt-6 space-y-4">
     <div class="skeleton h-6 w-48 rounded-full mx-auto"></div>
     <div class="flex gap-3 justify-center"><div class="skeleton w-44 h-52 rounded-sm flex-shrink-0"></div><div class="skeleton w-44 h-52 rounded-sm flex-shrink-0"></div></div>
@@ -106,258 +107,284 @@
   <div id="no-album" class="hidden px-4 pt-8 space-y-6">
     <div class="text-center">
       <p class="text-5xl mb-3">💌</p>
-      <p class="font-['Caveat'] text-3xl text-[#e91e8c]">Start your shared album</p>
-      <p class="text-sm text-[#b09070] mt-1">Invite your partner to build memories together</p>
+      <p class="font-['Caveat'] text-3xl text-[#e91e8c]">Bắt đầu album chung</p>
+      <p class="text-sm text-[#b09070] mt-1">Mời người yêu để cùng lưu giữ kỷ niệm</p>
     </div>
     <div class="invite-box space-y-4">
-      <p class="font-['Caveat'] text-xl text-[#c2185b]">Invite partner</p>
-      <input id="invite-email" type="email" placeholder="partner@email.com"
+      <p class="font-['Caveat'] text-xl text-[#c2185b]">Mời người yêu</p>
+      <input id="invite-email" type="email" placeholder="email@gmail.com"
         class="w-full rounded-xl border border-[#f8bbd0] bg-white px-4 py-3 text-sm text-[#6b5240] placeholder-[#e8a0b4] focus:outline-none focus:border-[#e91e8c]" />
-      <button onclick="sendInvite()" class="w-full py-3 rounded-2xl bg-[#e91e8c] hover:bg-[#c2185b] text-white font-['Caveat'] text-xl transition active:scale-95">Send Invitation 💌</button>
+      <button onclick="sendInvite()" class="w-full py-3 rounded-2xl bg-[#e91e8c] hover:bg-[#c2185b] text-white font-['Caveat'] text-xl transition active:scale-95">Gửi lời mời 💌</button>
     </div>
     <div id="pending-invites-wrap" class="hidden space-y-3">
-      <p class="font-['Caveat'] text-xl text-[#c2185b] px-1">Pending invitations</p>
+      <p class="font-['Caveat'] text-xl text-[#c2185b] px-1">Lời mời đang chờ</p>
       <div id="pending-invites-list" class="space-y-2"></div>
     </div>
   </div>
 
   <!-- Has album -->
   <div id="has-album" class="hidden">
-    <!-- Partner info -->
+    <!-- Partner bar -->
     <div class="flex items-center gap-3 px-4 py-3 bg-[#fdf6ec] border-b border-[#f8bbd0]">
       <div class="avatar" id="partner-avatar">?</div>
       <div>
         <p class="font-['Caveat'] text-base text-[#c2185b]" id="partner-email-label">Partner</p>
-        <p class="text-xs text-[#b09070]">Shared album ✦</p>
+        <p class="text-xs text-[#b09070]">Album chung ✦</p>
       </div>
       <span id="photo-count-badge" class="ml-auto text-xs bg-[#fce4ec] text-[#c2185b] rounded-full px-3 py-1 font-medium"></span>
     </div>
 
-    <!-- Day counter -->
-    <div class="px-4 py-3">
-      <div id="day-counter-banner" class="hidden">
-        <p class="font-['Caveat'] text-2xl text-[#e91e8c]" id="day-counter-text"></p>
-      </div>
-      <!-- Set anniversary date -->
-      <div id="anniversary-form" class="mt-2 flex items-center gap-2 flex-wrap">
-        <span class="text-xs text-[#b09070]">Set milestone date:</span>
-        <input type="date" id="anniversary-input" class="rounded-lg border border-[#f8bbd0] bg-[#fffdf7] px-3 py-1 text-sm text-[#6b5240] focus:outline-none focus:border-[#e91e8c]" />
-        <button onclick="saveAnniversary()" class="px-3 py-1 rounded-full bg-[#e91e8c] text-white text-xs hover:bg-[#c2185b] transition">Save</button>
+    <!-- ── Day Counter ── -->
+    <div id="day-counter-box" class="mx-4 mt-4 p-4 rounded-2xl space-y-3">
+      <p class="font-['Caveat'] text-lg text-[#c2185b]">💕 Bộ đếm ngày</p>
+      <div id="counter-display" class="font-['Caveat'] text-2xl text-[#e91e8c] text-center py-2 hidden"></div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="text-sm text-[#b09070]">Chọn mốc ngày:</label>
+        <input type="date" id="anniversary-input" class="ann-input flex-1" />
+        <button onclick="saveAnniversary()" class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition">Lưu</button>
       </div>
     </div>
 
-    <div class="fairy-lights" id="fairy-lights-bar"></div>
-
-    <div class="wall-row" id="wall-container">
-      <div class="rope" style="top:14px;"></div>
-      <div id="wall-loading" class="flex items-center justify-center h-48">
-        <span class="font-['Caveat'] text-[#e8a0b4] text-lg animate-pulse">Loading memories…</span>
-      </div>
+    <!-- Fairy lights + wall -->
+    <div class="fairy-lights mt-4" id="fairy-lights-bar"></div>
+    <div class="wall-row" id="wall-container" style="min-height:210px;">
+      <div class="rope"></div>
+      <div id="wall-loading" class="flex items-center justify-center h-48"><span class="font-['Caveat'] text-[#e8a0b4] text-lg animate-pulse">Đang tải…</span></div>
       <div id="scroll-strip" class="scroll-strip hidden"></div>
       <div id="empty-photos" class="hidden text-center py-12">
-        <p class="font-['Caveat'] text-xl text-[#e8a0b4]">No memories yet 💌</p>
-        <p class="text-sm text-[#b09070] mt-1">Tap + to add your first couple memory</p>
+        <p class="font-['Caveat'] text-xl text-[#e8a0b4]">Chưa có kỷ niệm 💌</p>
+        <p class="text-sm text-[#b09070] mt-1">Nhấn + để thêm ảnh đầu tiên</p>
       </div>
     </div>
-
-    <p class="text-center font-['Caveat'] text-[#e91e8c] text-base mt-4 mb-2 px-4">Every moment with you is a treasure 💝</p>
+    <p class="text-center font-['Caveat'] text-[#e91e8c] text-base mt-4 mb-2 px-4">Mỗi khoảnh khắc bên em là một kho báu 💝</p>
   </div>
 </main>
 
 <div id="toast"></div>
 
+<!-- UI helpers -->
 <script>
-  const modalTags = [];
-  function openUpload()  { const m=document.getElementById('upload-modal'); m.classList.remove('hidden'); m.style.opacity='1'; }
-  function closeUpload() { document.getElementById('upload-modal').classList.add('hidden'); }
+const modalTags = [];
+let selectedFile = null;
 
-  function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
+function openUpload()  { document.getElementById('upload-modal').classList.remove('hidden'); document.getElementById('upload-modal').style.opacity='1'; }
+function closeUpload() { document.getElementById('upload-modal').classList.add('hidden'); }
 
-  function addModalTag() {
-    const inp = document.getElementById('modal-tag-input');
-    let t = inp.value.trim().replace(/\s+/g,'').toLowerCase();
-    if (!t) return;
-    if (!t.startsWith('#')) t = '#' + t;
-    if (!modalTags.includes(t)) { modalTags.push(t); renderModalTags(); }
-    inp.value = '';
-  }
-  function removeModalTag(i) { modalTags.splice(i,1); renderModalTags(); }
-  function renderModalTags() {
-    const list = document.getElementById('modal-tag-list'); list.innerHTML = '';
-    modalTags.forEach((tag,i) => { const pill=document.createElement('span'); pill.className='tag-pill'; pill.innerHTML=`${tag} <button onclick="removeModalTag(${i})">×</button>`; list.appendChild(pill); });
-  }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 
-  const dz = document.getElementById('drop-zone');
-  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('dragover'); });
-  dz.addEventListener('dragleave', ()=>dz.classList.remove('dragover'));
-  dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('dragover'); if(e.dataTransfer.files[0]) loadModalPreview(e.dataTransfer.files[0]); });
-  document.getElementById('file-input').addEventListener('change', e=>{ if(e.target.files[0]) loadModalPreview(e.target.files[0]); });
+function addModalTag() {
+  const inp = document.getElementById('modal-tag-input');
+  let t = inp.value.trim().replace(/\s+/g,'').toLowerCase();
+  if (!t) return;
+  if (!t.startsWith('#')) t='#'+t;
+  if (!modalTags.includes(t)) { modalTags.push(t); renderModalTags(); }
+  inp.value='';
+}
+function removeModalTag(i) { modalTags.splice(i,1); renderModalTags(); }
+function renderModalTags() {
+  const list = document.getElementById('modal-tag-list');
+  list.innerHTML='';
+  modalTags.forEach((tag,i)=>{ const p=document.createElement('span'); p.className='tag-pill'; p.innerHTML=`${tag} <button onclick="removeModalTag(${i})">×</button>`; list.appendChild(p); });
+}
 
-  let selectedFile = null;
-  function loadModalPreview(file) {
-    if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
-    if (file.size > 10*1024*1024) { showToast('File too large (max 10 MB).'); return; }
-    selectedFile = file;
-    document.getElementById('modal-preview').src = URL.createObjectURL(file);
-    document.getElementById('modal-preview-wrap').classList.remove('hidden');
-    document.getElementById('drop-zone').classList.add('hidden');
-  }
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])loadPreview(e.dataTransfer.files[0]);});
+document.getElementById('file-input').addEventListener('change',e=>{if(e.target.files[0])loadPreview(e.target.files[0]);});
+
+function loadPreview(file) {
+  if(!file.type.startsWith('image/')){showToast('Vui lòng chọn file ảnh.');return;}
+  if(file.size>10*1024*1024){showToast('File quá lớn (tối đa 10 MB).');return;}
+  selectedFile=file;
+  document.getElementById('modal-preview').src=URL.createObjectURL(file);
+  document.getElementById('modal-preview-wrap').classList.remove('hidden');
+  document.getElementById('drop-zone').classList.add('hidden');
+}
 </script>
 
+<!-- Supabase module -->
 <script type="module">
-  const { createClient } = supabase;
-  const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
+const { createClient } = supabase;
+const sb = createClient(
+  'https://ifarghceexpsfyfatjkb.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
+);
 
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'login.html'; }
-  const userId = session.user.id;
-  const userEmail = session.user.email;
+const { data: { session } } = await sb.auth.getSession();
+if (!session) { location.href = 'login.html'; }
+const userId    = session.user.id;
+const userEmail = session.user.email;
 
-  const { data: albums } = await sb.from('couple_albums').select('*').or(`owner_id.eq.${userId},partner_id.eq.${userId}`).limit(1);
-  document.getElementById('loading-state').classList.add('hidden');
+const { data: albums } = await sb.from('couple_albums').select('*')
+  .or(`owner_id.eq.${userId},partner_id.eq.${userId}`).limit(1);
 
-  if (!albums?.length) {
-    document.getElementById('no-album').classList.remove('hidden');
-    const { data: pendingInvites } = await sb.from('couple_albums').select('*').eq('partner_email', userEmail).is('partner_id', null);
-    if (pendingInvites?.length) {
-      document.getElementById('pending-invites-wrap').classList.remove('hidden');
-      const list = document.getElementById('pending-invites-list');
-      pendingInvites.forEach(inv => {
-        const card = document.createElement('div');
-        card.className = 'invite-box flex items-center justify-between';
-        card.innerHTML = `<div><p class="font-['Caveat'] text-lg text-[#c2185b]">Invitation from</p><p class="text-sm text-[#6b5240]">${inv.owner_email||inv.owner_id}</p></div><button class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition" data-id="${inv.id}">Accept 💝</button>`;
-        card.querySelector('button').addEventListener('click', async () => {
-          const { error } = await sb.from('couple_albums').update({ partner_id: userId }).eq('id', inv.id);
-          if (error) { showToast('Error accepting invite.'); return; }
-          showToast('Album joined! 💝'); setTimeout(() => location.reload(), 1000);
-        });
-        list.appendChild(card);
-      });
-    }
-    window.sendInvite = async function() {
-      const email = document.getElementById('invite-email').value.trim();
-      if (!email || !email.includes('@')) { showToast('Enter a valid email.'); return; }
-      const { error } = await sb.from('couple_albums').insert({ owner_id:userId, owner_email:userEmail, partner_email:email, partner_id:null });
-      if (error) { showToast('Error: '+error.message); return; }
-      showToast('Invitation sent to '+email+' 💌');
-      document.getElementById('invite-email').value = '';
-    };
-    return;
-  }
+document.getElementById('loading-state').classList.add('hidden');
 
-  const album = albums[0];
-  document.getElementById('has-album').classList.remove('hidden');
-  document.getElementById('upload-btn').classList.remove('hidden');
-  document.getElementById('upload-btn-placeholder').classList.add('hidden');
+if (!albums?.length) {
+  document.getElementById('no-album').classList.remove('hidden');
 
-  const isOwner = album.owner_id === userId;
-  const partnerEmail = isOwner ? (album.partner_email||'Partner') : (album.owner_email||'Partner');
-  document.getElementById('partner-email-label').textContent = partnerEmail;
-  document.getElementById('partner-avatar').textContent = partnerEmail[0].toUpperCase();
+  const { data: pending } = await sb.from('couple_albums').select('*')
+    .eq('partner_email', userEmail).is('partner_id', null);
 
-  // ── Day counter ──────────────────────────────────────────────
-  function renderDayCounter(dateStr) {
-    const banner = document.getElementById('day-counter-banner');
-    const text   = document.getElementById('day-counter-text');
-    if (!dateStr) { banner.classList.add('hidden'); return; }
-    const start = new Date(dateStr + 'T00:00:00');
-    const today = new Date(); today.setHours(0,0,0,0);
-    const diffMs = today - start;
-    const days = Math.floor(diffMs / (1000*60*60*24));
-    const d = start.getDate(), m = start.getMonth()+1, y = start.getFullYear();
-    if (days >= 0) {
-      text.textContent = `💕 Đã ${days} ngày kể từ ${d}/${m}/${y}`;
-    } else {
-      text.textContent = `⏳ Còn ${Math.abs(days)} ngày đến ${d}/${m}/${y}`;
-    }
-    banner.classList.remove('hidden');
-  }
-
-  if (album.anniversary_date) {
-    renderDayCounter(album.anniversary_date);
-    document.getElementById('anniversary-input').value = album.anniversary_date;
-  }
-
-  window.saveAnniversary = async function() {
-    const val = document.getElementById('anniversary-input').value;
-    if (!val) return;
-    const { error } = await sb.from('couple_albums').update({ anniversary_date: val }).eq('id', album.id);
-    if (error) { showToast('Error saving date.'); return; }
-    album.anniversary_date = val;
-    renderDayCounter(val);
-    showToast('Milestone saved! 💕');
-  };
-
-  // Fairy lights
-  const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#f48fb1','#e91e8c','#f8bbd0'];
-  const bar = document.getElementById('fairy-lights-bar');
-  for (let i = 0; i < Math.floor(window.innerWidth/36)+2; i++) {
-    const b = document.createElement('div'); b.className='bulb';
-    b.style.cssText=`left:${i*36+10}px;background:${COLORS[i%COLORS.length]};box-shadow:0 0 6px 2px ${COLORS[i%COLORS.length]}88;animation-delay:${i*0.15}s`;
-    bar.appendChild(b);
-  }
-
-  // Load photos
-  const { data: photos, error: photoErr } = await sb.from('couple_photos').select('*').eq('album_id', album.id).order('created_at', { ascending: false });
-  document.getElementById('wall-loading').classList.add('hidden');
-  document.getElementById('photo-count-badge').textContent = `${photos?.length||0} photo${(photos?.length||0)!==1?'s':''}`;
-
-  if (photoErr || !photos?.length) {
-    document.getElementById('empty-photos').classList.remove('hidden');
-  } else {
-    const strip = document.getElementById('scroll-strip');
-    strip.classList.remove('hidden');
-    const rots = [-4,-2,0,2,4,-3,3,-1,1];
-
-    let base = [...photos];
-    const MIN = 6;
-    while (base.length < MIN) base = [...base, ...photos];
-    [...base, ...base].forEach((p, i) => {
-      const rot = rots[i%rots.length];
+  if (pending?.length) {
+    document.getElementById('pending-invites-wrap').classList.remove('hidden');
+    const list = document.getElementById('pending-invites-list');
+    pending.forEach(inv => {
       const card = document.createElement('div');
-      card.className = 'polaroid';
-      card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
-      card.innerHTML = `<div class="clip"></div><img src="${p.image_url}" alt="${p.note||'Couple memory'}" loading="lazy" draggable="false"/><p class="caption">${p.note?p.note.slice(0,28):'💝'}</p>`;
-      card.addEventListener('click', () => { window.location.href = `viewer.html?id=${p.id}&source=couple&album=${album.id}`; });
-      strip.appendChild(card);
+      card.className = 'invite-box flex items-center justify-between';
+      card.innerHTML = `<div><p class="font-['Caveat'] text-lg text-[#c2185b]">Lời mời từ</p><p class="text-sm text-[#6b5240]">${inv.owner_email||inv.owner_id}</p></div>
+        <button class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition" data-id="${inv.id}">Chấp nhận 💝</button>`;
+      card.querySelector('button').addEventListener('click', async () => {
+        const { error } = await sb.from('couple_albums').update({ partner_id: userId }).eq('id', inv.id);
+        if (error) { showToast('Lỗi khi chấp nhận lời mời.'); return; }
+        showToast('Đã tham gia album! 💝');
+        setTimeout(() => location.reload(), 1000);
+      });
+      list.appendChild(card);
     });
-
-    // JS auto-scroll
-    const c = document.getElementById('wall-container');
-    let auto=true, drag=false, sx=0, sl=0, wheelTimer;
-    function tick() { if(auto&&!drag){c.scrollLeft+=0.5; if(c.scrollLeft>=c.scrollWidth/2)c.scrollLeft=0;} requestAnimationFrame(tick); }
-    requestAnimationFrame(tick);
-    c.addEventListener('mouseenter',()=>auto=false);
-    c.addEventListener('mouseleave',()=>{if(!drag)auto=true;});
-    c.addEventListener('mousedown',e=>{drag=true;auto=false;sx=e.pageX-c.offsetLeft;sl=c.scrollLeft;});
-    c.addEventListener('mouseup',()=>{drag=false;});
-    c.addEventListener('mousemove',e=>{if(!drag)return;e.preventDefault();c.scrollLeft=sl-(e.pageX-c.offsetLeft-sx)*1.4;});
-    c.addEventListener('touchstart',e=>{sx=e.touches[0].pageX;sl=c.scrollLeft;auto=false;},{passive:true});
-    c.addEventListener('touchend',()=>{auto=true;});
-    c.addEventListener('touchmove',e=>{c.scrollLeft=sl-(e.touches[0].pageX-sx)*1.4;},{passive:true});
-    c.addEventListener('wheel',e=>{e.preventDefault();auto=false;c.scrollLeft+=e.deltaY*0.8;clearTimeout(wheelTimer);wheelTimer=setTimeout(()=>auto=true,2000);},{passive:false});
   }
 
-  window.saveCouplPhoto = async function() {
-    if (!window.selectedFile) { showToast('Please pick a photo first!'); return; }
-    const btn = document.getElementById('modal-save-btn');
-    btn.disabled=true; btn.textContent='Saving…';
-    try {
-      const ext=window.selectedFile.name.split('.').pop()||'jpg';
-      const photoId=crypto.randomUUID();
-      const path=`couples/${album.id}/${photoId}.${ext}`;
-      const { error:upErr } = await sb.storage.from('memories').upload(path, window.selectedFile, { contentType: window.selectedFile.type });
-      if (upErr) throw upErr;
-      const { data:{ publicUrl } } = sb.storage.from('memories').getPublicUrl(path);
-      const note = document.getElementById('modal-note').value.trim();
-      const { error:dbErr } = await sb.from('couple_photos').insert({ album_id:album.id, image_url:publicUrl, note:note||null, hashtags:window.modalTags, uploader_id:userId });
-      if (dbErr) throw dbErr;
-      showToast('Memory saved! 💝'); setTimeout(()=>location.reload(),1400);
-    } catch(err) {
-      showToast('Error: '+(err.message||'Something went wrong.'));
-      btn.disabled=false; btn.textContent='Save Memory 💝';
-    }
+  window.sendInvite = async function() {
+    const email = document.getElementById('invite-email').value.trim();
+    if (!email || !email.includes('@')) { showToast('Email không hợp lệ.'); return; }
+    const { error } = await sb.from('couple_albums').insert({ owner_id:userId, owner_email:userEmail, partner_email:email, partner_id:null });
+    if (error) { showToast('Lỗi: ' + error.message); return; }
+    showToast('Đã gửi lời mời đến ' + email + ' 💌');
+    document.getElementById('invite-email').value = '';
   };
+  return;
+}
+
+// Has album
+const album = albums[0];
+document.getElementById('has-album').classList.remove('hidden');
+document.getElementById('upload-btn').classList.remove('hidden');
+document.getElementById('upload-btn-placeholder').classList.add('hidden');
+
+const isOwner = album.owner_id === userId;
+const partnerEmail = isOwner ? (album.partner_email||'Partner') : (album.owner_email||'Partner');
+document.getElementById('partner-email-label').textContent = partnerEmail;
+document.getElementById('partner-avatar').textContent = partnerEmail[0].toUpperCase();
+
+// ── Day Counter ──
+function renderCounter(dateStr) {
+  const box = document.getElementById('counter-display');
+  if (!dateStr) { box.classList.add('hidden'); return; }
+  const ann   = new Date(dateStr + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff  = Math.floor((today - ann) / 86400000);
+  const d     = ann.getDate(), m = ann.getMonth()+1, y = ann.getFullYear();
+  if (diff >= 0) {
+    box.textContent = `💕 Đã ${diff} ngày kể từ ${d}/${m}/${y}`;
+  } else {
+    box.textContent = `⏳ Còn ${Math.abs(diff)} ngày đến ${d}/${m}/${y}`;
+  }
+  box.classList.remove('hidden');
+}
+
+if (album.anniversary_date) {
+  document.getElementById('anniversary-input').value = album.anniversary_date;
+  renderCounter(album.anniversary_date);
+}
+
+window.saveAnniversary = async function() {
+  const val = document.getElementById('anniversary-input').value;
+  if (!val) { showToast('Vui lòng chọn ngày.'); return; }
+  const { error } = await sb.from('couple_albums').update({ anniversary_date: val }).eq('id', album.id);
+  if (error) { showToast('Lỗi: ' + error.message); return; }
+  renderCounter(val);
+  showToast('Đã lưu mốc ngày! 💝');
+};
+
+// Fairy lights
+const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#f48fb1','#e91e8c','#f8bbd0'];
+const bar = document.getElementById('fairy-lights-bar');
+for (let i = 0; i < Math.floor(window.innerWidth/36)+2; i++) {
+  const b = document.createElement('div');
+  b.className = 'bulb';
+  b.style.cssText = `left:${i*36+10}px;background:${COLORS[i%COLORS.length]};box-shadow:0 0 6px 2px ${COLORS[i%COLORS.length]}88;animation-delay:${i*0.15}s`;
+  bar.appendChild(b);
+}
+
+// Load photos
+const { data: photos } = await sb.from('couple_photos').select('*').eq('album_id', album.id).order('created_at',{ascending:false});
+document.getElementById('wall-loading').classList.add('hidden');
+document.getElementById('photo-count-badge').textContent = `${photos?.length||0} ảnh`;
+
+if (!photos?.length) {
+  document.getElementById('empty-photos').classList.remove('hidden');
+} else {
+  const strip = document.getElementById('scroll-strip');
+  strip.classList.remove('hidden');
+  const MIN = 6;
+  let base = [...photos];
+  while (base.length < MIN) base = [...base, ...photos];
+  const doubled = [...base, ...base];
+  const rots = [-4,-2,0,2,4,-3,3,-1,1];
+
+  doubled.forEach((p,i) => {
+    const rot = rots[i%rots.length];
+    const card = document.createElement('div');
+    card.className = 'polaroid';
+    card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
+    card.innerHTML = `
+      <div class="pin"><div class="pin-head"></div><div class="pin-body"></div></div>
+      <img src="${p.image_url}" alt="${p.note||'Couple memory'}" loading="lazy" draggable="false"/>
+      <p class="caption">${p.note?p.note.slice(0,26):'💝'}</p>
+    `;
+    card.addEventListener('click',()=>{ location.href=`viewer.html?id=${p.id}&source=couple&album=${album.id}`; });
+    strip.appendChild(card);
+  });
+
+  // RAF scroll
+  let pos = 0, paused = false;
+  const speed = 0.42;
+  let wTimer;
+  function loop() {
+    if (!paused) {
+      pos -= speed;
+      const half = strip.scrollWidth / 2;
+      if (half > 0 && Math.abs(pos) >= half) pos = 0;
+      strip.style.transform = `translateX(${pos}px)`;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  const c = document.getElementById('wall-container');
+  c.addEventListener('mouseenter',()=>paused=true);
+  c.addEventListener('mouseleave',()=>paused=false);
+  c.addEventListener('wheel',e=>{ e.preventDefault(); pos-=e.deltaY*1.2; paused=true; clearTimeout(wTimer); wTimer=setTimeout(()=>paused=false,1500); },{passive:false});
+}
+
+// Save photo
+window.saveCouplPhoto = async function() {
+  if (!window.selectedFile) { showToast('Vui lòng chọn ảnh trước!'); return; }
+  const btn = document.getElementById('modal-save-btn');
+  btn.disabled=true; btn.textContent='Đang lưu…';
+  try {
+    const ext = window.selectedFile.name.split('.').pop()||'jpg';
+    const pid = crypto.randomUUID();
+    const path = `couples/${album.id}/${pid}.${ext}`;
+    const { error:upErr } = await sb.storage.from('memories').upload(path, window.selectedFile, {contentType:window.selectedFile.type});
+    if (upErr) throw upErr;
+    const { data:{publicUrl} } = sb.storage.from('memories').getPublicUrl(path);
+    const note = document.getElementById('modal-note').value.trim();
+    const { error:dbErr } = await sb.from('couple_photos').insert({ album_id:album.id, image_url:publicUrl, note:note||null, hashtags:window.modalTags, uploader_id:userId });
+    if (dbErr) throw dbErr;
+    showToast('Đã lưu! 💝');
+    setTimeout(()=>location.reload(),1400);
+  } catch(err) {
+    console.error(err);
+    showToast('Lỗi: '+(err.message||'Đã xảy ra lỗi.'));
+    btn.disabled=false; btn.textContent='Lưu kỷ niệm 💝';
+  }
+};
 </script>
 </body>
 </html>
