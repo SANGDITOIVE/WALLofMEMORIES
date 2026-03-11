@@ -1,5 +1,5 @@
 async function getUser() {
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await supabaseClient.auth.getUser();
   return data?.user;
 }
 
@@ -12,7 +12,7 @@ async function requireLogin() {
 
 async function signup(email, password) {
 
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabaseClient.auth.signUp({
     email: email,
     password: password
   });
@@ -28,7 +28,7 @@ async function signup(email, password) {
 
 async function login(email, password) {
 
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
     email: email,
     password: password
   });
