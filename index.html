@@ -4,13 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Memories Wall</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-
     * { box-sizing: border-box; }
     body { background-color: #f5ede0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
@@ -19,465 +16,316 @@
       content: ''; position: absolute; top: 12px; left: 0; right: 0; height: 1.5px;
       background: repeating-linear-gradient(to right, #c8a96e 0px, #c8a96e 18px, transparent 18px, transparent 36px);
     }
-    .bulb {
-      position: absolute; top: 8px; width: 9px; height: 13px;
-      border-radius: 50% 50% 45% 45%;
-      animation: glow 2.2s ease-in-out infinite alternate;
-    }
-    @keyframes glow {
-      from { opacity: 0.55; filter: blur(0.5px); }
-      to   { opacity: 1;    filter: blur(1.5px); }
-    }
+    .bulb { position: absolute; top: 8px; width: 9px; height: 13px; border-radius: 50% 50% 45% 45%; animation: glow 2.2s ease-in-out infinite alternate; }
+    @keyframes glow { from { opacity: 0.55; filter: blur(0.5px); } to { opacity: 1; filter: blur(1.5px); } }
 
-    .rope {
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(to right, #8B6343, #c8a96e, #8B6343);
-      border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    .rope { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(to right, #8B6343, #c8a96e, #8B6343); border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+
+    /* ── Wall rows (JS-scrolled, no CSS animation) ── */
+    .wall-row {
+      position: relative; width: 100%; min-height: 220px;
+      overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none;
     }
+    .wall-row::-webkit-scrollbar { display: none; }
 
     .scroll-strip {
       display: flex; gap: 2rem; padding: 2.5rem 2rem 1.5rem;
-      width: max-content;
-      animation: scrollLeft 35s linear infinite;
-      cursor: grab; user-select: none;
+      width: max-content; cursor: grab; user-select: none;
     }
     .scroll-strip:active { cursor: grabbing; }
-    .scroll-strip.paused { animation-play-state: paused; }
-    @keyframes scrollLeft {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
 
     .polaroid {
       background: #fffdf7; padding: 10px 10px 30px;
       box-shadow: 3px 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.1);
       border-radius: 2px; flex-shrink: 0; width: 160px;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      position: relative; cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer;
     }
     .polaroid:hover { box-shadow: 6px 10px 28px rgba(0,0,0,0.28); }
     .polaroid img { width: 100%; height: 140px; object-fit: cover; display: block; border-radius: 1px; }
-    .polaroid .caption {
-      font-family: 'Caveat', cursive; font-size: 13px; color: #6b5240;
-      text-align: center; margin-top: 6px; line-height: 1.3; min-height: 18px;
-    }
+    .polaroid .caption { font-family: 'Caveat', cursive; font-size: 13px; color: #6b5240; text-align: center; margin-top: 6px; line-height: 1.3; min-height: 18px; }
 
-    /* ── [NEW] Hashtag pills on card ── */
-    .polaroid .tag-row {
-      display: flex; flex-wrap: wrap; gap: 3px;
-      justify-content: center; margin-top: 5px;
-    }
-    .polaroid .tag-row a {
-      font-family: 'Caveat', cursive; font-size: 11px;
-      color: #a07840; text-decoration: none;
-      background: #f5ede0; border-radius: 10px;
-      padding: 1px 7px; transition: background 0.15s;
-      pointer-events: all;
-    }
+    .polaroid .tag-row { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 5px; }
+    .polaroid .tag-row a { font-family: 'Caveat', cursive; font-size: 11px; color: #a07840; text-decoration: none; background: #f5ede0; border-radius: 10px; padding: 1px 7px; transition: background 0.15s; pointer-events: all; }
     .polaroid .tag-row a:hover { background: #e8d5be; }
 
-    /* ── [NEW] User avatar ── */
-    .user-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: linear-gradient(135deg, #c8a96e, #8B6343);
-      color: #fff; font-family: 'Caveat', cursive; font-size: 13px; font-weight: 600;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; cursor: default; user-select: none;
-    }
+    .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #c8a96e, #8B6343); color: #fff; font-family: 'Caveat', cursive; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: default; user-select: none; }
 
-    .clip {
-      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-      width: 14px; height: 22px;
-      background: linear-gradient(to bottom, #a0714f, #7a5335);
-      border-radius: 3px 3px 2px 2px;
-      box-shadow: inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .clip::after {
-      content: ''; position: absolute; top: 7px; left: 2px; right: 2px;
-      height: 2px; background: rgba(0,0,0,0.2); border-radius: 1px;
-    }
+    .clip { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 14px; height: 22px; background: linear-gradient(to bottom, #a0714f, #7a5335); border-radius: 3px 3px 2px 2px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.3); }
+    .clip::after { content: ''; position: absolute; top: 7px; left: 2px; right: 2px; height: 2px; background: rgba(0,0,0,0.2); border-radius: 1px; }
 
     #menu-overlay { transition: transform 0.3s ease, opacity 0.3s ease; }
     #menu-overlay.hidden-menu { transform: translateX(-100%); opacity: 0; pointer-events: none; }
 
-    /* ── Custom category row ── */
-    .custom-cat {
-      display: flex; align-items: center;
-      border-radius: 8px; overflow: hidden;
-      transition: background 0.15s;
-    }
-    .custom-cat:hover { background: #f0e0cc; }
-    .custom-cat a {
-      flex: 1; display: flex; align-items: center; gap: 10px;
-      padding: 8px 12px; text-decoration: none; color: #6b5240; font-size: 14px;
-    }
-    .custom-cat .del-btn {
-      width: 28px; height: 28px; flex-shrink: 0; margin-right: 4px;
-      border: none; background: none; color: #c8a96e;
-      font-size: 15px; cursor: pointer; border-radius: 6px;
-      opacity: 0; transition: opacity 0.15s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .custom-cat:hover .del-btn { opacity: 1; }
-    .custom-cat .del-btn:hover { background: #fce4d6; color: #b94040; }
+    /* ── Hashtag nav rows ── */
+    .htag-item { position: relative; }
+    .htag-link-row { display: flex; align-items: center; border-radius: 8px; overflow: visible; transition: background 0.15s; }
+    .htag-link-row:hover { background: #f0e0cc; }
+    .htag-link-row a { flex: 1; display: flex; align-items: center; gap: 10px; padding: 8px 12px; text-decoration: none; color: #6b5240; font-size: 14px; }
+    .htag-more-btn { width: 28px; height: 28px; flex-shrink: 0; margin-right: 4px; border: none; background: none; color: #c8a96e; font-size: 18px; cursor: pointer; border-radius: 6px; opacity: 0; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .htag-link-row:hover .htag-more-btn { opacity: 1; }
+    .htag-more-btn:hover { background: #f0e0cc; color: #8B6343; }
+    .htag-dropdown { display: none; position: absolute; right: 4px; top: 36px; background: #fffdf7; border: 1.5px solid #e8d5be; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 100; min-width: 120px; overflow: hidden; }
+    .htag-dropdown.open { display: block; }
+    .htag-dropdown button { width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; background: none; border: none; cursor: pointer; color: #b94040; }
+    .htag-dropdown button:hover { background: #fce4d6; }
 
-    /* ── Add category form ── */
-    #add-cat-row {
-      display: none; align-items: center; gap-6: 6px;
-      padding: 6px 8px; border-radius: 10px;
-      background: #fffdf7; border: 1.5px solid #e8d5be;
-      margin-top: 4px;
-    }
-    #add-cat-row.open { display: flex; }
-    #emoji-picker-btn {
-      font-size: 1.3rem; width: 32px; height: 32px; flex-shrink: 0;
-      border: none; background: transparent; cursor: pointer; border-radius: 6px;
-      transition: background 0.15s;
-    }
-    #emoji-picker-btn:hover { background: #f0e0cc; }
-    #cat-name-input {
-      flex: 1; border: none; background: transparent; outline: none;
-      font-size: 13px; color: #6b5240; min-width: 0;
-    }
-    #cat-name-input::placeholder { color: #c8a96e; }
-    #save-cat-btn {
-      width: 26px; height: 26px; flex-shrink: 0;
-      border: none; background: #c8a96e; color: #fff;
-      border-radius: 50%; font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
-    }
-    #save-cat-btn:hover { background: #a07840; }
-
-    /* ── Emoji quick picker ── */
-    #emoji-panel {
-      display: none; flex-wrap: wrap; gap: 4px;
-      padding: 8px; background: #fffdf7; border: 1.5px solid #e8d5be;
-      border-radius: 12px; margin-top: 4px;
-    }
-    #emoji-panel.open { display: flex; }
-    #emoji-panel span {
-      font-size: 1.3rem; cursor: pointer; padding: 4px;
-      border-radius: 6px; transition: background 0.1s;
-    }
-    #emoji-panel span:hover { background: #f0e0cc; }
-
-    .empty-state {
-      font-family: 'Caveat', cursive; font-size: 1.4rem;
-      color: #b09070; text-align: center; padding: 3rem 1rem;
-    }
+    .empty-state { font-family: 'Caveat', cursive; font-size: 1.4rem; color: #b09070; text-align: center; padding: 3rem 1rem; }
   </style>
 </head>
-
 <body class="min-h-screen">
 
-  <!-- ══ MENU OVERLAY ══ -->
-  <div id="menu-overlay" class="hidden-menu fixed inset-0 z-50 flex">
-    <div class="absolute inset-0 bg-black/40" onclick="closeMenu()"></div>
+<!-- ══ MENU OVERLAY ══ -->
+<div id="menu-overlay" class="hidden-menu fixed inset-0 z-50 flex">
+  <div class="absolute inset-0 bg-black/40" onclick="closeMenu()"></div>
+  <nav class="relative z-10 h-full bg-[#fdf6ec] shadow-2xl flex flex-col pt-14 pb-4" style="width:272px;">
+    <button onclick="closeMenu()" class="absolute top-4 right-4 text-[#8B6343] text-2xl leading-none">&times;</button>
+    <p class="font-['Caveat'] text-2xl text-[#8B6343] font-semibold px-5 mb-3" id="menu-title">My Wall</p>
 
-    <nav class="relative z-10 w-68 h-full bg-[#fdf6ec] shadow-2xl flex flex-col pt-14 pb-4"
-         style="width:272px;">
-      <button onclick="closeMenu()" class="absolute top-4 right-4 text-[#8B6343] text-2xl leading-none">&times;</button>
-      <p class="font-['Caveat'] text-2xl text-[#8B6343] font-semibold px-5 mb-3" id="menu-title">My Wall</p>
+    <div class="flex-1 overflow-y-auto px-3 space-y-1 pb-2">
+      <a href="index.html"               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>🖼</span><span id="nav-all">All Photos</span></a>
+      <a href="hashtag.html?tag=family"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>👨‍👩‍👧</span><span id="nav-family">Family</span></a>
+      <a href="hashtag.html?tag=friends" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>👫</span><span id="nav-friends">Friends</span></a>
+      <a href="couple.html"              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>💝</span><span id="nav-couple">Couple Album</span></a>
 
-      <div class="flex-1 overflow-y-auto px-3 space-y-1 pb-2">
-        <a href="index.html"               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>🖼</span><span id="nav-all">All Photos</span></a>
-        <a href="hashtag.html?tag=family"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>👨‍👩‍👧</span><span id="nav-family">Family</span></a>
-        <a href="hashtag.html?tag=lover"   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>💑</span><span id="nav-lover">Lover</span></a>
-        <a href="hashtag.html?tag=friends" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>👫</span><span id="nav-friends">Friends</span></a>
-        <a href="hashtag.html?tag=couple"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>💝</span><span id="nav-couple">Couple Album</span></a>
+      <div class="border-t border-[#e8d5be] my-2"></div>
 
-        <div class="border-t border-[#e8d5be] my-2"></div>
+      <!-- My Hashtags section -->
+      <p class="px-3 text-[10px] font-semibold uppercase tracking-widest text-[#c8a96e] mb-1" id="lbl-my-hashtags">My Hashtags</p>
+      <p id="htag-loading" class="px-3 text-xs text-[#c8a96e] animate-pulse">Loading…</p>
 
-        <p class="px-3 text-[10px] font-semibold uppercase tracking-widest text-[#c8a96e] mb-1" id="lbl-my-cat">My Categories</p>
-        <p id="cat-loading" class="px-3 text-xs text-[#c8a96e] animate-pulse">Loading…</p>
-        <ul id="custom-cat-list" class="space-y-0.5"></ul>
+      <!-- No hashtag option -->
+      <a href="hashtag.html?tag=__none__" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition text-sm">
+        <span>🚫</span><span id="nav-no-tag">No hashtag</span>
+      </a>
 
-        <div id="add-cat-row" class="gap-1.5 mt-1">
-          <button id="emoji-picker-btn" onclick="toggleEmojiPanel()" title="Pick emoji">📁</button>
-          <input id="cat-name-input" type="text" maxlength="24"
-                 placeholder="Category name…"
-                 onkeydown="if(event.key==='Enter')saveCat()" />
-          <button id="save-cat-btn" onclick="saveCat()" title="Save">✓</button>
-        </div>
+      <ul id="hashtag-nav-list" class="space-y-0.5"></ul>
 
-        <div id="emoji-panel"></div>
+      <div class="border-t border-[#e8d5be] my-2"></div>
+      <a href="timeline.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📅</span><span id="nav-timeline">Timeline</span></a>
+      <a href="upload.html"   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📤</span><span id="nav-upload">Upload</span></a>
+    </div>
 
-        <button id="add-cat-btn" onclick="openAddCat()"
-          class="mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-[#c8a96e]
-                 hover:bg-[#f0e0cc] hover:text-[#8B6343] transition text-sm w-full">
-          <span class="text-base">＋</span>
-          <span id="lbl-add-cat">Add category</span>
-        </button>
+    <div class="px-5 pt-3 border-t border-[#e8d5be]">
+      <button onclick="handleLogout()" id="btn-logout" class="w-full text-center text-xs text-[#b09070] hover:text-[#8B6343] transition py-2">Log out</button>
+    </div>
+  </nav>
+</div>
 
-        <div class="border-t border-[#e8d5be] my-2"></div>
+<!-- ══ TOP BAR ══ -->
+<header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
+  <button onclick="openMenu()" class="w-9 h-9 flex flex-col justify-center items-center gap-1.5 rounded-md hover:bg-[#f0e0cc] transition" aria-label="Menu">
+    <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
+    <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
+    <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
+  </button>
+  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343] tracking-wide">✦ Memories Wall</h1>
+  <div class="flex items-center gap-2">
+    <div id="auth-links" class="flex items-center gap-2">
+      <a href="login.html"  class="text-xs px-3 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] hover:bg-[#f0e0cc]">Login</a>
+      <a href="signup.html" class="text-xs px-3 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] hover:bg-[#f0e0cc]">Sign up</a>
+    </div>
+    <div id="user-avatar" class="user-avatar hidden" title=""></div>
+    <button id="lang-btn" onclick="toggleLang()" class="text-xs font-medium px-2.5 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] bg-[#fdf6ec] hover:bg-[#f0e0cc] transition">VI</button>
+    <a href="upload.html" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e] hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
+  </div>
+</header>
 
-        <a href="timeline.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📅</span><span id="nav-timeline">Timeline</span></a>
-        <a href="upload.html"   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📤</span><span id="nav-upload">Upload</span></a>
-      </div>
+<!-- ══ MAIN ══ -->
+<main class="pt-16">
+  <div class="fairy-lights" id="fairy-lights-bar"></div>
 
-      <div class="px-5 pt-3 border-t border-[#e8d5be]">
-        <button onclick="handleLogout()" id="btn-logout"
-          class="w-full text-center text-xs text-[#b09070] hover:text-[#8B6343] transition py-2">
-          Log out
-        </button>
-      </div>
-    </nav>
+  <!-- Loading -->
+  <div id="loading-state" class="flex items-center justify-center h-48">
+    <span class="font-['Caveat'] text-[#b09070] text-lg animate-pulse" id="txt-loading">Loading memories…</span>
   </div>
 
-  <!-- ══ TOP BAR ══ -->
-  <header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3
-                 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
-    <button onclick="openMenu()" class="w-9 h-9 flex flex-col justify-center items-center gap-1.5 rounded-md hover:bg-[#f0e0cc] transition" aria-label="Menu">
-      <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
-      <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
-      <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
-    </button>
-    <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343] tracking-wide">✦ Memories Wall</h1>
-
-    <div class="flex items-center gap-2">
-      <!-- [NEW] Auth links (shown when NOT logged in) -->
-      <div id="auth-links" class="flex items-center gap-2">
-        <a href="login.html"  class="text-xs px-3 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] hover:bg-[#f0e0cc]">Login</a>
-        <a href="signup.html" class="text-xs px-3 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] hover:bg-[#f0e0cc]">Sign up</a>
-      </div>
-
-      <!-- [NEW] Avatar (shown when logged in) -->
-      <div id="user-avatar" class="user-avatar hidden" title=""></div>
-
-      <button id="lang-btn" onclick="toggleLang()"
-        class="text-xs font-medium px-2.5 py-1 rounded-full border border-[#c8a96e]
-               text-[#8B6343] bg-[#fdf6ec] hover:bg-[#f0e0cc] transition">VI</button>
-      <a href="upload.html"
-        class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e]
-               hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
-    </div>
-  </header>
-
-  <!-- ══ MAIN ══ -->
-  <main class="pt-16">
-    <div class="fairy-lights" id="fairy-lights-bar"></div>
-    <div id="wall-container" class="relative w-full overflow-hidden" style="min-height:260px;">
+  <!-- Wall: 2 rows -->
+  <div id="wall-outer" class="hidden space-y-0">
+    <!-- Row 1 -->
+    <div class="wall-row" id="row1-container">
       <div class="rope" style="top:14px;"></div>
-      <div id="loading-state" class="flex items-center justify-center h-48">
-        <span class="font-['Caveat'] text-[#b09070] text-lg animate-pulse" id="txt-loading">Loading memories…</span>
-      </div>
-      <div id="scroll-strip" class="scroll-strip hidden"></div>
-      <div id="empty-state" class="empty-state hidden">
-        <p id="txt-empty">No memories yet. Upload your first photo! 📷</p>
-      </div>
+      <div class="scroll-strip" id="strip1"></div>
     </div>
-    <p class="text-center font-['Caveat'] text-[#c8a96e] text-base mt-6 mb-4 px-4" id="footer-note">
-      Every photo tells a story ✦
-    </p>
-  </main>
+    <!-- Row 2 -->
+    <div class="wall-row" id="row2-container">
+      <div class="rope" style="top:14px;"></div>
+      <div class="scroll-strip" id="strip2"></div>
+    </div>
+  </div>
 
-  <!-- ══ Script thường — chạy ngay ══ -->
-  <script>
-    function openMenu()  { document.getElementById('menu-overlay').classList.remove('hidden-menu'); }
-    function closeMenu() { document.getElementById('menu-overlay').classList.add('hidden-menu'); }
+  <div id="empty-state" class="empty-state hidden">
+    <p id="txt-empty">No memories yet. Upload your first photo! 📷</p>
+  </div>
 
-    const T = {
-      en: { loading:'Loading memories…', empty:'No memories yet. Upload your first photo! 📷',
-            footer:'Every photo tells a story ✦', menuTitle:'My Wall', navAll:'All Photos',
-            navFamily:'Family', navLover:'Lover', navFriends:'Friends', navCouple:'Couple Album',
-            navTimeline:'Timeline', navUpload:'Upload', logout:'Log out',
-            myCat:'My Categories', addCat:'Add category', catPlaceholder:'Category name…' },
-      vi: { loading:'Đang tải kỷ niệm…', empty:'Chưa có ảnh nào. Hãy tải ảnh đầu tiên lên! 📷',
-            footer:'Mỗi tấm ảnh là một câu chuyện ✦', menuTitle:'Tường Kỷ Niệm', navAll:'Tất cả ảnh',
-            navFamily:'Gia đình', navLover:'Người yêu', navFriends:'Bạn bè', navCouple:'Album Đôi',
-            navTimeline:'Dòng thời gian', navUpload:'Tải lên', logout:'Đăng xuất',
-            myCat:'Danh mục của tôi', addCat:'Thêm danh mục', catPlaceholder:'Tên danh mục…' }
-    };
-    let lang = localStorage.getItem('mw_lang') || 'en';
+  <p class="text-center font-['Caveat'] text-[#c8a96e] text-base mt-6 mb-4 px-4" id="footer-note">
+    Every photo tells a story ✦
+  </p>
+</main>
 
-    function applyLang() {
-      const t = T[lang];
-      document.getElementById('txt-loading').textContent   = t.loading;
-      document.getElementById('txt-empty').textContent     = t.empty;
-      document.getElementById('footer-note').textContent   = t.footer;
-      document.getElementById('menu-title').textContent    = t.menuTitle;
-      document.getElementById('nav-all').textContent       = t.navAll;
-      document.getElementById('nav-family').textContent    = t.navFamily;
-      document.getElementById('nav-lover').textContent     = t.navLover;
-      document.getElementById('nav-friends').textContent   = t.navFriends;
-      document.getElementById('nav-couple').textContent    = t.navCouple;
-      document.getElementById('nav-timeline').textContent  = t.navTimeline;
-      document.getElementById('nav-upload').textContent    = t.navUpload;
-      document.getElementById('btn-logout').textContent    = t.logout;
-      document.getElementById('lbl-my-cat').textContent    = t.myCat;
-      document.getElementById('lbl-add-cat').textContent   = t.addCat;
-      document.getElementById('cat-name-input').placeholder = t.catPlaceholder;
-      document.getElementById('lang-btn').textContent      = lang === 'en' ? 'VI' : 'EN';
+<!-- ══ Script thường ══ -->
+<script>
+  function openMenu()  { document.getElementById('menu-overlay').classList.remove('hidden-menu'); }
+  function closeMenu() { document.getElementById('menu-overlay').classList.add('hidden-menu'); }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.htag-item')) {
+      document.querySelectorAll('.htag-dropdown.open').forEach(d => d.classList.remove('open'));
     }
-    function toggleLang() {
-      lang = lang === 'en' ? 'vi' : 'en';
-      localStorage.setItem('mw_lang', lang);
-      applyLang();
-    }
+  });
+
+  function toggleHtagMenu(btn) {
+    const dd = btn.nextElementSibling;
+    const isOpen = dd.classList.contains('open');
+    document.querySelectorAll('.htag-dropdown.open').forEach(d => d.classList.remove('open'));
+    if (!isOpen) dd.classList.add('open');
+  }
+
+  const T = {
+    en: { loading:'Loading memories…', empty:'No memories yet. Upload your first photo! 📷',
+          footer:'Every photo tells a story ✦', menuTitle:'My Wall', navAll:'All Photos',
+          navFamily:'Family', navFriends:'Friends', navCouple:'Couple Album',
+          navTimeline:'Timeline', navUpload:'Upload', logout:'Log out',
+          myHashtags:'My Hashtags', noTag:'No hashtag' },
+    vi: { loading:'Đang tải kỷ niệm…', empty:'Chưa có ảnh nào. Hãy tải ảnh đầu tiên lên! 📷',
+          footer:'Mỗi tấm ảnh là một câu chuyện ✦', menuTitle:'Tường Kỷ Niệm', navAll:'Tất cả ảnh',
+          navFamily:'Gia đình', navFriends:'Bạn bè', navCouple:'Album Đôi',
+          navTimeline:'Dòng thời gian', navUpload:'Tải lên', logout:'Đăng xuất',
+          myHashtags:'Hashtag của tôi', noTag:'Không có hashtag' }
+  };
+  let lang = localStorage.getItem('mw_lang') || 'en';
+
+  function applyLang() {
+    const t = T[lang];
+    document.getElementById('txt-loading').textContent  = t.loading;
+    document.getElementById('txt-empty').textContent    = t.empty;
+    document.getElementById('footer-note').textContent  = t.footer;
+    document.getElementById('menu-title').textContent   = t.menuTitle;
+    document.getElementById('nav-all').textContent      = t.navAll;
+    document.getElementById('nav-family').textContent   = t.navFamily;
+    document.getElementById('nav-friends').textContent  = t.navFriends;
+    document.getElementById('nav-couple').textContent   = t.navCouple;
+    document.getElementById('nav-timeline').textContent = t.navTimeline;
+    document.getElementById('nav-upload').textContent   = t.navUpload;
+    document.getElementById('btn-logout').textContent   = t.logout;
+    document.getElementById('lbl-my-hashtags').textContent = t.myHashtags;
+    document.getElementById('nav-no-tag').textContent   = t.noTag;
+    document.getElementById('lang-btn').textContent     = lang === 'en' ? 'VI' : 'EN';
+  }
+  function toggleLang() {
+    lang = lang === 'en' ? 'vi' : 'en';
+    localStorage.setItem('mw_lang', lang);
     applyLang();
+  }
+  applyLang();
+</script>
 
-    // Emoji picker
-    const EMOJIS = ['📁','🌸','🏖','🎵','🐾','🌍','🎂','⚽','🎨','🍜',
-                    '📚','🏋','🌙','🎮','🐶','🌺','🎸','🏡','✈️','🎁'];
-    const panel = document.getElementById('emoji-panel');
-    EMOJIS.forEach(e => {
-      const sp = document.createElement('span');
-      sp.textContent = e;
-      sp.onclick = () => { selectEmoji(e); };
-      panel.appendChild(sp);
-    });
+<!-- ══ Script module ══ -->
+<script type="module">
+  const { createClient } = supabase;
+  const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
 
-    let chosenEmoji = '📁';
-    function selectEmoji(e) {
-      chosenEmoji = e;
-      document.getElementById('emoji-picker-btn').textContent = e;
-      panel.classList.remove('open');
-    }
-    function toggleEmojiPanel() { panel.classList.toggle('open'); }
-    function openAddCat() {
-      document.getElementById('add-cat-row').classList.add('open');
-      document.getElementById('add-cat-btn').style.display = 'none';
-      document.getElementById('cat-name-input').focus();
-    }
-  </script>
+  window.handleLogout = async () => { await sb.auth.signOut(); location.href = 'login.html'; };
 
-  <!-- ══ Script module — Supabase + async ══ -->
-  <script type="module">
-    const { createClient } = supabase;
-    const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; }
+  const userId = session.user.id;
 
-    window.handleLogout = async () => { await sb.auth.signOut(); location.href = 'login.html'; };
+  // Avatar
+  const email = session.user.email || '';
+  const avatarEl = document.getElementById('user-avatar');
+  avatarEl.textContent = email.slice(0, 2).toUpperCase();
+  avatarEl.title = email;
+  avatarEl.classList.remove('hidden');
+  document.getElementById('auth-links').classList.add('hidden');
 
-    // Auth
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; }
-    const userId = session.user.id;
+  // Fairy lights
+  const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#c7f2a4','#a8d8ea','#e2b4f7'];
+  const bar = document.getElementById('fairy-lights-bar');
+  for (let i = 0; i < Math.floor(window.innerWidth / 36) + 2; i++) {
+    const b = document.createElement('div');
+    b.className = 'bulb';
+    b.style.cssText = `left:${i*36+10}px;background:${COLORS[i%COLORS.length]};box-shadow:0 0 6px 2px ${COLORS[i%COLORS.length]}88;animation-delay:${i*0.15}s`;
+    bar.appendChild(b);
+  }
 
-    // ── [FIX 1] Avatar: lấy 2 ký tự đầu của email ──────────────
-    const email    = session.user.email || '';
-    const initials = email.slice(0, 2).toUpperCase();
-    const avatarEl = document.getElementById('user-avatar');
-    avatarEl.textContent = initials;
-    avatarEl.title       = email;
-    avatarEl.classList.remove('hidden');
-    document.getElementById('auth-links').classList.add('hidden');
+  // ── Load hashtags for menu ──────────────────────────────────
+  async function loadHashtagMenu() {
+    const { data: photos } = await sb.from('photos').select('hashtags').eq('user_id', userId);
+    document.getElementById('htag-loading').style.display = 'none';
+    const tagSet = new Set();
+    (photos || []).forEach(p => (p.hashtags || []).forEach(t => tagSet.add(t)));
+    renderHashtagMenu([...tagSet].sort());
+  }
 
-    // Fairy lights
-    const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#c7f2a4','#a8d8ea','#e2b4f7'];
-    const bar = document.getElementById('fairy-lights-bar');
-    for (let i = 0; i < Math.floor(window.innerWidth / 36) + 2; i++) {
-      const b = document.createElement('div');
-      b.className = 'bulb';
-      b.style.cssText = `left:${i*36+10}px;background:${COLORS[i%COLORS.length]};box-shadow:0 0 6px 2px ${COLORS[i%COLORS.length]}88;animation-delay:${i*0.15}s`;
-      bar.appendChild(b);
-    }
-
-    // Load custom categories
-    async function loadCategories() {
-      document.getElementById('cat-loading').style.display = 'block';
-      const { data: cats } = await sb
-        .from('user_categories').select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: true });
-      document.getElementById('cat-loading').style.display = 'none';
-      renderCategories(cats || []);
-    }
-
-    function renderCategories(cats) {
-      const list = document.getElementById('custom-cat-list');
-      list.innerHTML = '';
-      cats.forEach(cat => {
-        const li = document.createElement('li');
-        li.className = 'custom-cat';
-        li.dataset.id = cat.id;
-        li.innerHTML = `
-          <a href="hashtag.html?tag=${encodeURIComponent(cat.name.toLowerCase())}">
-            <span>${cat.emoji || '📁'}</span>
-            <span>${cat.name}</span>
+  function renderHashtagMenu(tags) {
+    const list = document.getElementById('hashtag-nav-list');
+    list.innerHTML = '';
+    tags.forEach(tag => {
+      const clean = tag.replace('#', '');
+      const li = document.createElement('li');
+      li.className = 'htag-item';
+      li.innerHTML = `
+        <div class="htag-link-row">
+          <a href="hashtag.html?tag=${encodeURIComponent(clean)}" class="flex-1 flex items-center gap-3 px-3 py-2 text-[#6b5240] no-underline text-sm rounded-lg">
+            <span class="text-[#c8a96e]">#</span><span>${clean}</span>
           </a>
-          <button class="del-btn" title="Delete" onclick="deleteCategory('${cat.id}', this)">×</button>
-        `;
-        list.appendChild(li);
-      });
-    }
-
-    window.saveCat = async function() {
-      const input = document.getElementById('cat-name-input');
-      const name  = input.value.trim();
-      if (!name) { input.focus(); return; }
-      const emoji = window.chosenEmoji || '📁';
-      const btn   = document.getElementById('save-cat-btn');
-      btn.textContent = '…'; btn.disabled = true;
-      const { data, error } = await sb.from('user_categories').insert({
-        user_id: userId, name, emoji
-      }).select().single();
-      btn.textContent = '✓'; btn.disabled = false;
-      if (error) { alert('Error: ' + error.message); return; }
-      const list = document.getElementById('custom-cat-list');
-      const li   = document.createElement('li');
-      li.className  = 'custom-cat';
-      li.dataset.id = data.id;
-      li.innerHTML  = `
-        <a href="hashtag.html?tag=${encodeURIComponent(data.name.toLowerCase())}">
-          <span>${data.emoji}</span><span>${data.name}</span>
-        </a>
-        <button class="del-btn" title="Delete" onclick="deleteCategory('${data.id}', this)">×</button>
+          <button class="htag-more-btn" onclick="event.preventDefault();toggleHtagMenu(this)" title="More">⋯</button>
+          <div class="htag-dropdown">
+            <button onclick="deleteHashtag('${tag}', this)">🗑 Delete tag</button>
+          </div>
+        </div>
       `;
       list.appendChild(li);
-      input.value = '';
-      window.chosenEmoji = '📁';
-      document.getElementById('emoji-picker-btn').textContent = '📁';
-      document.getElementById('emoji-panel').classList.remove('open');
-      document.getElementById('add-cat-row').classList.remove('open');
-      document.getElementById('add-cat-btn').style.display = '';
-    };
+    });
+  }
 
-    window.deleteCategory = async function(id, btnEl) {
-      if (!confirm('Delete this category?')) return;
-      const { error } = await sb.from('user_categories').delete().eq('id', id);
-      if (error) { alert('Error: ' + error.message); return; }
-      btnEl.closest('li').remove();
-    };
+  window.deleteHashtag = async function(tag, btnEl) {
+    if (!confirm(`Delete hashtag "${tag}"?\n\nThis removes the tag from all your photos.\nPhotos will NOT be deleted.`)) return;
+    if (!confirm(`Are you sure? This cannot be undone.`)) return;
 
-    await loadCategories();
+    // Remove tag from all photos that have it
+    const { data: affected } = await sb.from('photos').select('id, hashtags').eq('user_id', userId).contains('hashtags', [tag]);
+    for (const p of (affected || [])) {
+      await sb.from('photos').update({ hashtags: (p.hashtags || []).filter(h => h !== tag) }).eq('id', p.id);
+    }
+    btnEl.closest('li').remove();
+  };
 
-    // Load photos
-    const { data: photos, error } = await sb
-      .from('photos').select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+  await loadHashtagMenu();
 
-    const loadingEl = document.getElementById('loading-state');
-    const stripEl   = document.getElementById('scroll-strip');
-    const emptyEl   = document.getElementById('empty-state');
-    loadingEl.classList.add('hidden');
+  // ── Load photos ──────────────────────────────────────────────
+  const { data: photos, error } = await sb
+    .from('photos').select('*').eq('user_id', userId).order('created_at', { ascending: false });
 
-    if (error || !photos?.length) {
-      emptyEl.classList.remove('hidden');
-    } else {
-      stripEl.classList.remove('hidden');
+  document.getElementById('loading-state').classList.add('hidden');
 
-      // ── [FIX 2] Chống lặp ảnh: pad đủ 8 trước khi duplicate ──
-      const MIN_DISPLAY = 8;
-      let base = [...photos];
-      while (base.length < MIN_DISPLAY) base = [...base, ...photos];
-      const displayPhotos = [...base, ...base]; // duplicate for seamless loop
+  if (error || !photos?.length) {
+    document.getElementById('empty-state').classList.remove('hidden');
+  } else {
+    document.getElementById('wall-outer').classList.remove('hidden');
 
-      const rots = [-4,-2,0,2,4,-3,3,-1,1];
+    const MIN = 8;
+    let base = [...photos];
+    while (base.length < MIN) base = [...base, ...photos];
 
-      displayPhotos.forEach((p, i) => {
-        const rot  = rots[i % rots.length];
+    // Split into 2 rows (odd/even)
+    const row1Photos = base.filter((_, i) => i % 2 === 0);
+    const row2Photos = base.filter((_, i) => i % 2 === 1);
+
+    const rots = [-4,-2,0,2,4,-3,3,-1,1];
+
+    function buildStrip(photos, stripId) {
+      const strip = document.getElementById(stripId);
+      const display = [...photos, ...photos];
+      display.forEach((p, i) => {
+        const rot = rots[i % rots.length];
         const card = document.createElement('div');
         card.className = 'polaroid';
         card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
-
-        // ── [FIX 3] Hashtags clickable ──
         const tagHTML = (p.hashtags || []).slice(0, 3).map(tag =>
-          `<a href="hashtag.html?tag=${encodeURIComponent(tag.replace('#',''))}"
-              onclick="event.stopPropagation()">${tag}</a>`
+          `<a href="hashtag.html?tag=${encodeURIComponent(tag.replace('#',''))}" onclick="event.stopPropagation()">${tag}</a>`
         ).join('');
-
         card.innerHTML = `
           <div class="clip"></div>
           <img src="${p.image_url}" alt="${p.note || 'Memory'}" loading="lazy" draggable="false"/>
@@ -485,23 +333,48 @@
           ${tagHTML ? `<div class="tag-row">${tagHTML}</div>` : ''}
         `;
         card.onclick = () => location.href = `viewer.html?id=${p.id}`;
-        stripEl.appendChild(card);
+        strip.appendChild(card);
       });
-
-      const c = document.getElementById('wall-container');
-      let drag=false, sx=0, sl=0;
-      const pause  = () => stripEl.classList.add('paused');
-      const resume = () => { if (!drag) stripEl.classList.remove('paused'); };
-      c.addEventListener('mouseenter', pause);
-      c.addEventListener('mouseleave', resume);
-      c.addEventListener('mousedown',  e => { drag=true; sx=e.pageX-c.offsetLeft; sl=c.scrollLeft; pause(); });
-      c.addEventListener('mouseup',    () => { drag=false; resume(); });
-      c.addEventListener('mousemove',  e => { if(!drag) return; e.preventDefault(); c.scrollLeft=sl-(e.pageX-c.offsetLeft-sx)*1.4; });
-      c.addEventListener('touchstart', e => { sx=e.touches[0].pageX; sl=c.scrollLeft; pause(); }, {passive:true});
-      c.addEventListener('touchend',   resume);
-      c.addEventListener('touchmove',  e => { c.scrollLeft=sl-(e.touches[0].pageX-sx)*1.4; }, {passive:true});
     }
-  </script>
 
+    buildStrip(row1Photos, 'strip1');
+    buildStrip(row2Photos, 'strip2');
+
+    // ── JS auto-scroll for each row ──
+    function setupRow(containerId, speed) {
+      const c = document.getElementById(containerId);
+      let auto = true, dragging = false, startX = 0, startScroll = 0, wheelTimer;
+
+      function tick() {
+        if (auto && !dragging) {
+          c.scrollLeft += speed;
+          if (c.scrollLeft >= c.scrollWidth / 2) c.scrollLeft = 0;
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+
+      c.addEventListener('mouseenter', () => auto = false);
+      c.addEventListener('mouseleave', () => { if (!dragging) auto = true; });
+      c.addEventListener('mousedown', e => { dragging = true; auto = false; startX = e.pageX - c.offsetLeft; startScroll = c.scrollLeft; });
+      c.addEventListener('mouseup', () => { dragging = false; });
+      c.addEventListener('mousemove', e => { if (!dragging) return; e.preventDefault(); c.scrollLeft = startScroll - (e.pageX - c.offsetLeft - startX) * 1.4; });
+      c.addEventListener('touchstart', e => { startX = e.touches[0].pageX; startScroll = c.scrollLeft; auto = false; }, { passive: true });
+      c.addEventListener('touchend', () => { auto = true; });
+      c.addEventListener('touchmove', e => { c.scrollLeft = startScroll - (e.touches[0].pageX - startX) * 1.4; }, { passive: true });
+      // Mouse wheel scrolls the strip
+      c.addEventListener('wheel', e => {
+        e.preventDefault();
+        auto = false;
+        c.scrollLeft += e.deltaY * 0.8;
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(() => { auto = true; }, 2000);
+      }, { passive: false });
+    }
+
+    setupRow('row1-container', 0.55);
+    setupRow('row2-container', 0.4);
+  }
+</script>
 </body>
 </html>
