@@ -1,152 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hashtag – Memories Wall</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-    * { box-sizing: border-box; }
-    body { background: #f5ede0; font-family: 'Inter', sans-serif; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hashtag – Memories Wall</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
+* { box-sizing: border-box; }
+body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; }
 
-    /* Masonry grid */
-    .masonry { columns: 2; column-gap: 12px; }
-    @media (min-width: 480px) { .masonry { columns: 3; } }
-    @media (min-width: 640px) { .masonry { columns: 4; } }
+/* ── Grid layout ── */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
 
-    .masonry-item { break-inside: avoid; margin-bottom: 12px; cursor: pointer; }
+/* ── Polaroid ── */
+.polaroid {
+  background: #fffdf7; padding: 8px 8px 28px;
+  box-shadow: 3px 4px 14px rgba(0,0,0,.16);
+  border-radius: 2px; position: relative; cursor: pointer;
+  transition: box-shadow .2s, transform .2s;
+}
+.polaroid:hover { box-shadow: 5px 8px 24px rgba(0,0,0,.24); transform: scale(1.03); }
+.polaroid img { width:100%; height:120px; object-fit:cover; display:block; border-radius:1px; }
+.polaroid .caption { font-family:'Caveat',cursive; font-size:12px; color:#6b5240; text-align:center; margin-top:5px; line-height:1.3; }
 
-    .polaroid { background: #fffdf7; padding: 8px 8px 28px; box-shadow: 2px 4px 12px rgba(0,0,0,0.15); border-radius: 2px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .polaroid:hover { transform: scale(1.04); box-shadow: 5px 8px 22px rgba(0,0,0,0.22); }
-    .polaroid img { width: 100%; object-fit: cover; display: block; border-radius: 1px; }
-    .polaroid .caption { font-family: 'Caveat', cursive; font-size: 12px; color: #6b5240; text-align: center; margin-top: 4px; line-height: 1.3; }
+.frame-retro     { border:5px solid #8B6343; }
+.frame-modern    { border:2px solid #333; border-radius:6px; }
+.frame-christmas { border:5px solid #c0392b; box-shadow:0 0 0 2px #27ae60; }
+.frame-valentine { border:5px solid #e91e8c; }
+.frame-tet       { border:5px solid #e53935; box-shadow:0 0 0 2px #ffd600; }
 
-    .frame-retro     { border: 4px solid #8B6343 !important; }
-    .frame-modern    { border: 2px solid #333 !important; border-radius: 6px !important; }
-    .frame-christmas { border: 4px solid #c0392b !important; box-shadow: 0 0 0 2px #27ae60 !important; }
-    .frame-valentine { border: 4px solid #e91e8c !important; }
-    .frame-tet       { border: 4px solid #e53935 !important; box-shadow: 0 0 0 2px #ffd600 !important; }
+/* ── Tag chips row ── */
+.tag-chip {
+  display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 13px;
+  border: 1.5px solid #c8a96e; background: #fffdf7; color: #8B6343;
+  cursor: pointer; transition: all .15s; font-family: 'Caveat', cursive; text-decoration: none;
+}
+.tag-chip:hover  { background: #f0e0cc; }
+.tag-chip.active { background: #c8a96e; color: #fff; border-color: #a07840; }
 
-    /* Related tags */
-    .tag-chip { display: inline-block; background: #fffdf7; border: 1.5px solid #e8d5be; border-radius: 20px; padding: 3px 12px; font-family: 'Caveat', cursive; font-size: 14px; color: #8B6343; text-decoration: none; transition: background 0.15s; }
-    .tag-chip:hover { background: #f0e0cc; }
-    .tag-chip.active { background: #c8a96e; color: #fff; border-color: #a07840; }
-
-    .skeleton { background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-  </style>
+.skeleton { background:linear-gradient(90deg,#e8d5be 25%,#f5ede0 50%,#e8d5be 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
 </head>
 <body class="min-h-screen">
 
 <header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
-  <a href="index.html" class="text-[#8B6343] text-xl">←</a>
-  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]" id="page-title">#tag</h1>
+  <a href="index.html" class="text-[#8B6343] text-xl leading-none">←</a>
+  <h1 id="page-title" class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Hashtag</h1>
   <div class="w-6"></div>
 </header>
 
-<main class="max-w-2xl mx-auto px-4 pt-4 pb-16 space-y-4">
-
-  <!-- Related / All tags -->
-  <div id="tags-row" class="flex flex-wrap gap-2 py-2"></div>
+<main class="max-w-2xl mx-auto pb-16">
+  <!-- Tag chips -->
+  <div id="tag-chips" class="flex flex-wrap gap-2 px-4 pt-4 pb-2"></div>
 
   <!-- Skeleton -->
-  <div id="skeleton" class="masonry">
-    <div class="masonry-item skeleton h-48 rounded-sm"></div>
-    <div class="masonry-item skeleton h-36 rounded-sm"></div>
-    <div class="masonry-item skeleton h-52 rounded-sm"></div>
-    <div class="masonry-item skeleton h-40 rounded-sm"></div>
+  <div id="skeleton" class="photo-grid">
+    <div class="skeleton" style="padding-top:120%;border-radius:2px;"></div>
+    <div class="skeleton" style="padding-top:120%;border-radius:2px;"></div>
+    <div class="skeleton" style="padding-top:120%;border-radius:2px;"></div>
+    <div class="skeleton" style="padding-top:120%;border-radius:2px;"></div>
+  </div>
+
+  <!-- Empty -->
+  <div id="empty-state" class="hidden text-center py-20">
+    <p class="font-['Caveat'] text-2xl text-[#b09070]">Không có ảnh nào 🍂</p>
+    <a href="upload.html" class="text-sm text-[#8B6343] underline mt-3 inline-block">Tải ảnh lên</a>
   </div>
 
   <!-- Grid -->
-  <div id="masonry-grid" class="masonry hidden"></div>
-
-  <!-- Empty -->
-  <div id="empty-state" class="hidden text-center py-16">
-    <p class="font-['Caveat'] text-2xl text-[#b09070]">No photos found 🍂</p>
-    <a href="upload.html" class="text-sm text-[#8B6343] underline mt-2 inline-block">Upload a memory</a>
-  </div>
-
+  <div id="photo-grid" class="photo-grid hidden"></div>
 </main>
 
 <script type="module">
-  const { createClient } = supabase;
-  const sb = createClient('https://ifarghceexpsfyfatjkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ');
+const { createClient } = supabase;
+const sb = createClient(
+  'https://ifarghceexpsfyfatjkb.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
+);
 
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'login.html'; }
-  const userId = session.user.id;
+const { data: { session } } = await sb.auth.getSession();
+if (!session) { location.href = 'login.html'; }
+const userId = session.user.id;
 
-  const params = new URLSearchParams(location.search);
-  const tag    = params.get('tag') || '';
-  const isNone = tag === '__none__';
+const params  = new URLSearchParams(location.search);
+const activeTag = params.get('tag') || '';
 
-  // Set page title
-  document.getElementById('page-title').textContent = isNone ? '🚫 No hashtag' : ('#' + tag);
+// Update title
+if (activeTag === '__none__') {
+  document.getElementById('page-title').textContent = '🏷 Không có hashtag';
+} else if (activeTag) {
+  document.getElementById('page-title').textContent = '#' + activeTag;
+}
 
-  // Load all user photos
-  const { data: allPhotos } = await sb.from('photos').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+// Load all user hashtags for chip row
+const { data: allPhotos } = await sb.from('photos').select('hashtags').eq('user_id', userId);
+const allTags = new Set();
+(allPhotos||[]).forEach(p => (p.hashtags||[]).forEach(t => allTags.add(t.replace('#','').toLowerCase())));
 
-  // Filter by tag
-  let filtered;
-  if (isNone) {
-    filtered = (allPhotos || []).filter(p => !p.hashtags || p.hashtags.length === 0);
-  } else {
-    filtered = (allPhotos || []).filter(p => (p.hashtags || []).some(h => h.replace('#','').toLowerCase() === tag.toLowerCase()));
-  }
+const chipsEl = document.getElementById('tag-chips');
 
-  // Collect all tags for the tags row
-  const allTags = new Set();
-  (allPhotos || []).forEach(p => (p.hashtags||[]).forEach(h => allTags.add(h.replace('#','').toLowerCase())));
+// "No hashtag" chip
+const noneChip = document.createElement('a');
+noneChip.className = 'tag-chip' + (activeTag === '__none__' ? ' active' : '');
+noneChip.href = 'hashtag.html?tag=__none__';
+noneChip.textContent = '🏷 Không hashtag';
+chipsEl.appendChild(noneChip);
 
-  const tagsRow = document.getElementById('tags-row');
-  // "No hashtag" chip
-  const noChip = document.createElement('a');
-  noChip.href = 'hashtag.html?tag=__none__';
-  noChip.className = 'tag-chip' + (isNone ? ' active' : '');
-  noChip.textContent = '🚫 No tag';
-  tagsRow.appendChild(noChip);
+[...allTags].sort().forEach(tag => {
+  const chip = document.createElement('a');
+  chip.className = 'tag-chip' + (tag === activeTag ? ' active' : '');
+  chip.href = `hashtag.html?tag=${encodeURIComponent(tag)}`;
+  chip.textContent = '#' + tag;
+  chipsEl.appendChild(chip);
+});
 
-  [...allTags].sort().forEach(t => {
-    const chip = document.createElement('a');
-    chip.href = `hashtag.html?tag=${encodeURIComponent(t)}`;
-    chip.className = 'tag-chip' + (t === tag.toLowerCase() ? ' active' : '');
-    chip.textContent = '#' + t;
-    tagsRow.appendChild(chip);
+// Load photos
+let photos;
+if (activeTag === '__none__') {
+  // Photos with no hashtags or empty hashtags
+  const { data } = await sb.from('photos').select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  photos = (data||[]).filter(p => !p.hashtags || p.hashtags.length === 0);
+} else if (activeTag) {
+  // Photos containing this tag (with or without #)
+  const { data: d1 } = await sb.from('photos').select('*')
+    .eq('user_id', userId)
+    .contains('hashtags', [activeTag])
+    .order('created_at', { ascending: false });
+  const { data: d2 } = await sb.from('photos').select('*')
+    .eq('user_id', userId)
+    .contains('hashtags', ['#' + activeTag])
+    .order('created_at', { ascending: false });
+  // Merge and deduplicate
+  const seen = new Set();
+  photos = [...(d1||[]), ...(d2||[])].filter(p => { if(seen.has(p.id)) return false; seen.add(p.id); return true; });
+  photos.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+} else {
+  const { data } = await sb.from('photos').select('*').eq('user_id', userId).order('created_at',{ascending:false});
+  photos = data || [];
+}
+
+document.getElementById('skeleton').classList.add('hidden');
+
+if (!photos.length) {
+  document.getElementById('empty-state').classList.remove('hidden');
+} else {
+  const grid = document.getElementById('photo-grid');
+  grid.classList.remove('hidden');
+  const rots = [-3,-1.5,0,1.5,3,-2,2,-1,1];
+
+  photos.forEach((p, i) => {
+    const rot  = rots[i % rots.length];
+    const card = document.createElement('div');
+    card.className = 'polaroid';
+    if (p.frame && p.frame !== 'none' && p.frame !== 'polaroid') card.classList.add('frame-' + p.frame);
+    card.style.transform = `rotate(${rot}deg)`;
+
+    card.innerHTML = `
+      <img src="${p.image_url}" alt="${p.note||'Memory'}" loading="lazy" />
+      <p class="caption">${p.note ? p.note.slice(0,22) : ''}</p>
+    `;
+    card.addEventListener('click', () => location.href = `viewer.html?id=${p.id}`);
+    grid.appendChild(card);
   });
-
-  document.getElementById('skeleton').classList.add('hidden');
-
-  if (!filtered.length) {
-    document.getElementById('empty-state').classList.remove('hidden');
-  } else {
-    const grid = document.getElementById('masonry-grid');
-    grid.classList.remove('hidden');
-    const rots = [-3,-1,0,1,3,-2,2];
-
-    filtered.forEach((photo, i) => {
-      const item = document.createElement('div');
-      item.className = 'masonry-item';
-      const card = document.createElement('div');
-      card.className = 'polaroid';
-      if (photo.frame && photo.frame !== 'polaroid') card.classList.add('frame-' + photo.frame);
-      card.style.transform = `rotate(${rots[i%rots.length]}deg)`;
-
-      const imgWrap = document.createElement('div');
-      imgWrap.style.position = 'relative';
-      const img = document.createElement('img');
-      img.src = photo.image_url; img.alt = photo.note||'Memory'; img.loading='lazy';
-      imgWrap.appendChild(img);
-
-      (photo.stickers||[]).forEach(s => {
-        const sp=document.createElement('span');
-        sp.style.cssText=`position:absolute;font-size:1rem;pointer-events:none;left:${s.left};top:${s.top};`;
-        sp.textContent=s.emoji; imgWrap.appendChild(sp);
-      });
-
-      const
-
-
-
-
+}
+</script>
+</body>
+</html>
