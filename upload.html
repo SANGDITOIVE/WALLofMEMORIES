@@ -7,9 +7,9 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 * { box-sizing: border-box; }
-body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; }
+body { background: #f5ede0; font-family: 'Patrick Hand', cursive; }
 
 #drop-zone { border:2.5px dashed #c8a96e; background:#fffdf7; transition:background .2s,border-color .2s; }
 #drop-zone.dragover { background:#fdf0d8; border-color:#a07840; }
@@ -151,7 +151,7 @@ body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; }
         <p class="text-xs text-[#b09070] mb-2">Hashtag có sẵn (nhấn để chọn):</p>
         <div id="chip-container" class="flex flex-wrap gap-2">
           <!-- Preset chips -->
-          <button class="htag-chip" onclick="toggleChip(this,'family')">#family</button>
+          <button class="htag-chip" data-tag="family" onclick="toggleChip(this,'family')">#family</button>
           <button class="htag-chip" onclick="toggleChip(this,'friends')">#friends</button>
           <button class="htag-chip" onclick="toggleChip(this,'travel')">#travel</button>
           <button class="htag-chip" onclick="toggleChip(this,'food')">#food</button>
@@ -354,7 +354,7 @@ window.saveMemory = async function() {
     }
 
     // tags array → store as "#tag"
-    const hashtagsToSave = window.tags.map(t => '#' + t);
+    const hashtagsToSave = tags.map(t => '#' + t);
 
     const { error: dbErr } = await sb.from('photos').insert({
       user_id  : userId,
@@ -378,3 +378,4 @@ window.saveMemory = async function() {
 </script>
 </body>
 </html>
+
