@@ -1,12 +1,6 @@
 async function getUser() {
-  try {
-    const { data, error } = await supabaseClient.auth.getUser();
-    if (error) throw error;
-    return data?.user;
-  } catch (err) {
-    console.error('Get user error:', err);
-    return null;
-  }
+  const { data, error } = await supabaseClient.auth.getUser();
+  return data?.user;
 }
 
 async function requireLogin() {
@@ -14,41 +8,42 @@ async function requireLogin() {
   if (!user) {
     window.location.href = "login.html";
   }
-  return user;
 }
 
 async function signup(email, password) {
-  try {
-    const { data, error } = await supabaseClient.auth.signUp({
-      email: email,
-      password: password
-    });
 
-    if (error) throw error;
+  const { data, error } = await supabaseClient.auth.signUp({
+    email: email,
+    password: password
+  });
 
-    alert("Account created! Please check your email for confirmation.");
-    window.location.href = "login.html";
-  } catch (error) {
+  if (error) {
     alert(error.message);
+    return;
   }
+
+  alert("Account created! Please login.");
+  window.location.href = "login.html";
 }
 
 async function login(email, password) {
-  try {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
 
-    if (error) throw error;
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
 
-    window.location.href = "index.html";
-  } catch (error) {
+  if (error) {
     alert(error.message);
+    return;
   }
+
+  window.location.href = "index.html";
 }
 
 async function logout() {
-  await supabaseClient.auth.signOut();
+  await supabase.auth.signOut();
   window.location.href = "login.html";
 }
+
+
