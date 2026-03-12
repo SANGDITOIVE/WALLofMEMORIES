@@ -1,532 +1,391 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Couple Album - Memories Wall</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { font-family: 'Patrick Hand', cursive; }
-        body { background: #f5ede0; }
-        
-        .scroll-container {
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-        }
-        
-        .scroll-track {
-            display: flex;
-            gap: 1.5rem;
-            padding: 2rem 1rem 1rem;
-            width: max-content;
-            will-change: transform;
-            animation: scroll 45s linear infinite;
-        }
-        
-        .scroll-track.paused {
-            animation-play-state: paused;
-        }
-        
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        
-        .polaroid {
-            background: #fffdf7;
-            padding: 0.5rem 0.5rem 1.5rem;
-            box-shadow: 3px 4px 14px rgba(0,0,0,0.15);
-            border-radius: 2px;
-            width: clamp(130px, 25vw, 160px);
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .polaroid:hover {
-            transform: translateY(-5px) !important;
-            box-shadow: 8px 12px 28px rgba(233,30,140,0.25);
-        }
-        
-        .polaroid img {
-            width: 100%;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-        }
-        
-        .pin {
-            position: absolute;
-            top: -1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 1rem;
-            height: 1.8rem;
-            z-index: 2;
-        }
-        
-        .pin-head {
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, #f9c0d0, #c2185b);
-        }
-        
-        .pin-body {
-            width: 0.3rem;
-            height: 1rem;
-            margin: 0 auto;
-            background: linear-gradient(to bottom, #e91e8c, #880e4f);
-            border-radius: 0 0 3px 3px;
-        }
-        
-        .counter-card {
-            background: linear-gradient(135deg, #fffdf7, #fce4ec);
-            border: 2px solid #f8bbd0;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-        }
-        
-        .invite-card {
-            background: linear-gradient(135deg, #fffdf7, #fce4ec);
-            border: 2px solid #f8bbd0;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-        }
-        
-        .avatar-large {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #e91e8c, #c8a96e);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        
-        @media (min-width: 768px) {
-            .polaroid { width: 180px; }
-            .avatar-large { width: 3.5rem; height: 3.5rem; font-size: 1.4rem; }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Couple Album – Memories Wall</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
+* { box-sizing: border-box; }
+body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; overflow-x:hidden; }
+
+.fairy-lights { position:relative; width:100%; height:28px; overflow:hidden; }
+.fairy-lights::before { content:''; position:absolute; top:12px; left:0; right:0; height:1.5px; background:repeating-linear-gradient(to right,#e91e8c 0,#e91e8c 18px,transparent 18px,transparent 36px); }
+.bulb { position:absolute; top:8px; width:9px; height:13px; border-radius:50% 50% 45% 45%; animation:glow 2.2s ease-in-out infinite alternate; }
+@keyframes glow { from{opacity:.5;filter:blur(.5px)} to{opacity:1;filter:blur(1.5px)} }
+
+.rope { position:absolute; left:0; right:0; height:4px; top:0; background:repeating-linear-gradient(to right,#7a5230,#e91e8c66 40%,#a0673a 60%,#7a5230); border-radius:2px; box-shadow:0 2px 4px rgba(0,0,0,.3); }
+
+.wall-row { position:relative; overflow:hidden; width:100%; }
+.scroll-strip { display:flex; gap:2rem; padding:26px 2rem 1rem; width:max-content; will-change:transform; cursor:grab; user-select:none; }
+.scroll-strip:active { cursor:grabbing; }
+
+.polaroid { background:#fffdf7; padding:10px 10px 30px; box-shadow:3px 4px 14px rgba(0,0,0,.18); border-radius:2px; flex-shrink:0; width:155px; position:relative; cursor:pointer; }
+.polaroid:hover { box-shadow:6px 10px 28px rgba(233,30,140,.22); }
+.polaroid img { width:100%; height:130px; object-fit:cover; display:block; border-radius:1px; }
+.polaroid .caption { font-family:'Caveat',cursive; font-size:13px; color:#6b5240; text-align:center; margin-top:6px; line-height:1.3; }
+
+.pin { position:absolute; top:-22px; left:50%; transform:translateX(-50%); width:12px; height:22px; z-index:2; }
+.pin-head { width:12px; height:12px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#f9c0d0,#c2185b); box-shadow:0 2px 4px rgba(0,0,0,.4); }
+.pin-body { width:4px; height:12px; margin:0 auto; background:linear-gradient(to bottom,#e91e8c,#880e4f); border-radius:0 0 3px 3px; }
+
+/* Day counter */
+#day-counter-box { background:linear-gradient(135deg,#fffdf7,#fce4ec); border:1.5px solid #f8bbd0; border-radius:20px; }
+
+.invite-box { background:linear-gradient(135deg,#fffdf7,#fce4ec); border:1.5px solid #f8bbd0; border-radius:20px; padding:24px; }
+.avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#e91e8c,#c8a96e); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Caveat',cursive; font-size:16px; font-weight:600; flex-shrink:0; }
+
+/* Upload modal */
+#upload-modal { transition:opacity .25s ease; }
+#upload-modal.hidden { opacity:0; pointer-events:none; }
+#drop-zone { border:2.5px dashed #e91e8c88; background:#fffdf7; transition:background .2s,border-color .2s; }
+#drop-zone.dragover { background:#fdf0f6; border-color:#e91e8c; }
+.tag-pill { display:inline-flex; align-items:center; gap:4px; background:#fce4ec; color:#880e4f; border-radius:20px; padding:3px 10px; font-size:13px; }
+.tag-pill button { background:none; border:none; color:#c2185b; cursor:pointer; font-size:15px; line-height:1; padding:0; }
+
+.skeleton { background:linear-gradient(90deg,#f8bbd0 25%,#fce4ec 50%,#f8bbd0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:#3d2b1f; color:#fff; padding:10px 22px; border-radius:24px; font-size:14px; z-index:999; transition:transform .3s ease; white-space:nowrap; }
+#toast.show { transform:translateX(-50%) translateY(0); }
+
+.ann-input { border:1.5px solid #f8bbd0; background:#fffdf7; border-radius:10px; padding:8px 14px; font-size:14px; color:#6b5240; font-family:'Be Vietnam Pro',sans-serif; outline:none; }
+.ann-input:focus { border-color:#e91e8c; }
+</style>
 </head>
 <body class="min-h-screen">
-    <!-- Upload Modal -->
-    <div id="uploadModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/40" onclick="closeUploadModal()"></div>
-        <div class="relative z-10 w-full max-w-md bg-[#fdf6ec] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl text-[#e91e8c]">💝 Thêm kỷ niệm</h2>
-                <button onclick="closeUploadModal()" class="text-2xl text-[#b09070]">×</button>
-            </div>
-            
-            <div id="dropZone" class="border-2 border-dashed border-[#e91e8c88] rounded-2xl p-6 text-center cursor-pointer hover:bg-[#fdf0f6] transition" onclick="document.getElementById('fileInput').click()">
-                <span class="text-4xl">📷</span>
-                <p class="text-[#a07840]">Nhấn để chọn hoặc kéo thả ảnh</p>
-            </div>
-            <input id="fileInput" type="file" accept="image/*" class="hidden">
-            
-            <div id="previewWrap" class="hidden mt-4">
-                <img id="previewImg" src="" class="w-full rounded-xl max-h-52 object-cover">
-            </div>
-            
-            <textarea id="photoNote" rows="2" maxlength="200" placeholder="Ghi chú..." class="w-full mt-4 rounded-xl border border-[#f8bbd0] p-3 text-[#6b5240] focus:outline-none focus:border-[#e91e8c]"></textarea>
-            
-            <button id="saveBtn" onclick="savePhoto()" class="w-full mt-4 py-3 rounded-2xl bg-[#e91e8c] text-white text-xl hover:bg-[#c2185b] transition active:scale-95">
-                Lưu kỷ niệm 💝
-            </button>
-        </div>
+
+<!-- Upload Modal -->
+<div id="upload-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" onclick="closeUpload()"></div>
+  <div class="relative z-10 w-full max-w-lg bg-[#fdf6ec] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[92dvh] overflow-y-auto">
+    <div class="flex items-center justify-between">
+      <p class="font-['Caveat'] text-2xl text-[#e91e8c]">💝 Thêm kỷ niệm</p>
+      <button onclick="closeUpload()" class="text-[#b09070] text-2xl leading-none">×</button>
+    </div>
+    <div id="drop-zone" class="rounded-2xl p-6 flex flex-col items-center gap-2 text-center cursor-pointer" onclick="document.getElementById('file-input').click()">
+      <span class="text-3xl">📷</span>
+      <p class="text-sm text-[#a07840]">Nhấn để chọn hoặc kéo thả ảnh</p>
+    </div>
+    <input id="file-input" type="file" accept="image/*" class="hidden" />
+    <div id="modal-preview-wrap" class="hidden"><img id="modal-preview" src="" class="w-full rounded-xl max-h-52 object-cover" /></div>
+    <textarea id="modal-note" rows="2" maxlength="200" placeholder="Ghi chú…" class="w-full rounded-xl border border-[#f8bbd0] bg-[#fffdf7] px-4 py-3 text-sm text-[#6b5240] placeholder-[#e8a0b4] resize-none focus:outline-none focus:border-[#e91e8c]"></textarea>
+    <div>
+      <div id="modal-tag-list" class="flex flex-wrap gap-2 mb-2"></div>
+      <div class="flex gap-2">
+        <input id="modal-tag-input" type="text" placeholder="#couple" maxlength="30"
+          class="flex-1 rounded-xl border border-[#f8bbd0] bg-[#fffdf7] px-3 py-2 text-sm text-[#6b5240] placeholder-[#e8a0b4] focus:outline-none focus:border-[#e91e8c]"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addModalTag();}" />
+        <button onclick="addModalTag()" class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition">Thêm</button>
+      </div>
+    </div>
+    <button id="modal-save-btn" onclick="saveCouplPhoto()"
+      class="w-full py-3 rounded-2xl bg-[#e91e8c] hover:bg-[#c2185b] text-white font-['Caveat'] text-xl transition active:scale-95">
+      Lưu kỷ niệm 💝
+    </button>
+  </div>
+</div>
+
+<!-- Top bar -->
+<header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#f8bbd0]">
+  <a href="index.html" class="text-[#e91e8c] text-xl">←</a>
+  <h1 class="font-['Caveat'] text-xl font-semibold text-[#e91e8c]">💝 Couple Album</h1>
+  <button onclick="openUpload()" id="upload-btn" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#e91e8c] hover:bg-[#c2185b] transition text-white text-lg font-bold hidden">+</button>
+  <div id="upload-btn-placeholder" class="w-9"></div>
+</header>
+
+<main class="max-w-lg mx-auto pb-16">
+  <!-- Loading -->
+  <div id="loading-state" class="px-4 pt-6 space-y-4">
+    <div class="skeleton h-6 w-48 rounded-full mx-auto"></div>
+    <div class="flex gap-3 justify-center"><div class="skeleton w-44 h-52 rounded-sm flex-shrink-0"></div><div class="skeleton w-44 h-52 rounded-sm flex-shrink-0"></div></div>
+  </div>
+
+  <!-- No album -->
+  <div id="no-album" class="hidden px-4 pt-8 space-y-6">
+    <div class="text-center">
+      <p class="text-5xl mb-3">💌</p>
+      <p class="font-['Caveat'] text-3xl text-[#e91e8c]">Bắt đầu album chung</p>
+      <p class="text-sm text-[#b09070] mt-1">Mời người yêu để cùng lưu giữ kỷ niệm</p>
+    </div>
+    <div class="invite-box space-y-4">
+      <p class="font-['Caveat'] text-xl text-[#c2185b]">Mời người yêu</p>
+      <input id="invite-email" type="email" placeholder="email@gmail.com"
+        class="w-full rounded-xl border border-[#f8bbd0] bg-white px-4 py-3 text-sm text-[#6b5240] placeholder-[#e8a0b4] focus:outline-none focus:border-[#e91e8c]" />
+      <button onclick="sendInvite()" class="w-full py-3 rounded-2xl bg-[#e91e8c] hover:bg-[#c2185b] text-white font-['Caveat'] text-xl transition active:scale-95">Gửi lời mời 💌</button>
+    </div>
+    <div id="pending-invites-wrap" class="hidden space-y-3">
+      <p class="font-['Caveat'] text-xl text-[#c2185b] px-1">Lời mời đang chờ</p>
+      <div id="pending-invites-list" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Has album -->
+  <div id="has-album" class="hidden">
+    <!-- Partner bar -->
+    <div class="flex items-center gap-3 px-4 py-3 bg-[#fdf6ec] border-b border-[#f8bbd0]">
+      <div class="avatar" id="partner-avatar">?</div>
+      <div>
+        <p class="font-['Caveat'] text-base text-[#c2185b]" id="partner-email-label">Partner</p>
+        <p class="text-xs text-[#b09070]">Album chung ✦</p>
+      </div>
+      <span id="photo-count-badge" class="ml-auto text-xs bg-[#fce4ec] text-[#c2185b] rounded-full px-3 py-1 font-medium"></span>
     </div>
 
-    <!-- Top Bar -->
-    <header class="sticky top-0 z-40 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#f8bbd0] px-4 py-3">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="text-2xl text-[#e91e8c]">←</a>
-            <h1 class="text-2xl md:text-3xl text-[#e91e8c]">💝 Couple Album</h1>
-            <button id="uploadBtn" onclick="openUploadModal()" class="w-10 h-10 rounded-full bg-[#e91e8c] text-white text-xl font-bold hover:bg-[#c2185b] transition hidden">+</button>
-        </div>
-    </header>
+    <!-- ── Day Counter ── -->
+    <div id="day-counter-box" class="mx-4 mt-4 p-4 rounded-2xl space-y-3">
+      <p class="font-['Caveat'] text-lg text-[#c2185b]">💕 Bộ đếm ngày</p>
+      <div id="counter-display" class="font-['Caveat'] text-2xl text-[#e91e8c] text-center py-2 hidden"></div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="text-sm text-[#b09070]">Chọn mốc ngày:</label>
+        <input type="date" id="anniversary-input" class="ann-input flex-1" />
+        <button onclick="saveAnniversary()" class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition">Lưu</button>
+      </div>
+    </div>
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Loading State -->
-        <div id="loadingState" class="text-center py-8">
-            <p class="text-xl text-[#e8a0b4] animate-pulse">Đang tải...</p>
-        </div>
+    <!-- Fairy lights + wall -->
+    <div class="fairy-lights mt-4" id="fairy-lights-bar"></div>
+    <div class="wall-row" id="wall-container" style="min-height:210px;">
+      <div class="rope"></div>
+      <div id="wall-loading" class="flex items-center justify-center h-48"><span class="font-['Caveat'] text-[#e8a0b4] text-lg animate-pulse">Đang tải…</span></div>
+      <div id="scroll-strip" class="scroll-strip hidden"></div>
+      <div id="empty-photos" class="hidden text-center py-12">
+        <p class="font-['Caveat'] text-xl text-[#e8a0b4]">Chưa có kỷ niệm 💌</p>
+        <p class="text-sm text-[#b09070] mt-1">Nhấn + để thêm ảnh đầu tiên</p>
+      </div>
+    </div>
+    <p class="text-center font-['Caveat'] text-[#e91e8c] text-base mt-4 mb-2 px-4">Mỗi khoảnh khắc bên em là một kho báu 💝</p>
+  </div>
+</main>
 
-        <!-- No Album State -->
-        <div id="noAlbumState" class="hidden space-y-6 max-w-md mx-auto">
-            <div class="text-center">
-                <p class="text-6xl mb-4">💌</p>
-                <h2 class="text-3xl text-[#e91e8c] mb-2">Bắt đầu album chung</h2>
-                <p class="text-[#b09070]">Mời người yêu để cùng lưu giữ kỷ niệm</p>
-            </div>
-            
-            <div class="invite-card space-y-4">
-                <h3 class="text-2xl text-[#c2185b]">Mời người yêu</h3>
-                <input id="inviteEmail" type="email" placeholder="email@example.com" class="w-full rounded-xl border border-[#f8bbd0] p-3 text-[#6b5240] focus:outline-none focus:border-[#e91e8c]">
-                <button onclick="sendInvite()" class="w-full py-3 rounded-2xl bg-[#e91e8c] text-white text-xl hover:bg-[#c2185b] transition">Gửi lời mời 💌</button>
-            </div>
-            
-            <div id="pendingInvites" class="hidden space-y-3"></div>
-        </div>
+<div id="toast"></div>
 
-        <!-- Has Album State -->
-        <div id="hasAlbumState" class="hidden space-y-6">
-            <!-- Partner Info -->
-            <div class="flex items-center gap-4 p-4 bg-[#fdf6ec] rounded-2xl border border-[#f8bbd0]">
-                <div id="partnerAvatar" class="avatar-large">?</div>
-                <div>
-                    <p id="partnerEmail" class="text-xl text-[#c2185b]">Partner</p>
-                    <p class="text-sm text-[#b09070]">Album chung ✦</p>
-                </div>
-                <span id="photoCount" class="ml-auto px-3 py-1 bg-[#fce4ec] text-[#c2185b] rounded-full text-sm"></span>
-            </div>
+<!-- UI helpers -->
+<script>
+const modalTags = [];
+let selectedFile = null;
 
-            <!-- Day Counter -->
-            <div class="counter-card">
-                <h3 class="text-2xl text-[#c2185b] mb-4">💕 Bộ đếm ngày</h3>
-                
-                <div id="counterDisplay" class="text-3xl text-center text-[#e91e8c] mb-4 hidden"></div>
-                
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <input type="date" id="anniversaryInput" class="flex-1 rounded-xl border border-[#f8bbd0] p-3 text-[#6b5240]">
-                    <button onclick="saveAnniversary()" class="px-6 py-3 rounded-xl bg-[#e91e8c] text-white hover:bg-[#c2185b] transition whitespace-nowrap">
-                        Lưu mốc
-                    </button>
-                </div>
-            </div>
+function openUpload()  { document.getElementById('upload-modal').classList.remove('hidden'); document.getElementById('upload-modal').style.opacity='1'; }
+function closeUpload() { document.getElementById('upload-modal').classList.add('hidden'); }
 
-            <!-- Photo Wall -->
-            <div class="scroll-container">
-                <div id="photoWall" class="scroll-track"></div>
-            </div>
-            
-            <div id="emptyPhotos" class="hidden text-center py-8">
-                <p class="text-2xl text-[#e8a0b4] mb-2">Chưa có kỷ niệm</p>
-                <p class="text-[#b09070]">Nhấn + để thêm ảnh đầu tiên</p>
-            </div>
-        </div>
-    </main>
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 
-    <script>
-        let currentAlbum = null;
-        let selectedFile = null;
-        
-        function openUploadModal() {
-            document.getElementById('uploadModal').classList.remove('hidden');
-        }
-        
-        function closeUploadModal() {
-            document.getElementById('uploadModal').classList.add('hidden');
-            selectedFile = null;
-            document.getElementById('previewWrap').classList.add('hidden');
-            document.getElementById('photoNote').value = '';
-        }
-        
-        // Drag & drop
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        
-        dropZone.addEventListener('dragover', e => {
-            e.preventDefault();
-            dropZone.classList.add('bg-[#fdf0f6]');
-        });
-        
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('bg-[#fdf0f6]');
-        });
-        
-        dropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            dropZone.classList.remove('bg-[#fdf0f6]');
-            if (e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
-        });
-        
-        fileInput.addEventListener('change', e => {
-            if (e.target.files[0]) handleFileSelect(e.target.files[0]);
-        });
-        
-        function handleFileSelect(file) {
-            if (!file.type.startsWith('image/')) {
-                alert('Vui lòng chọn file ảnh');
-                return;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File quá lớn (tối đa 10 MB)');
-                return;
-            }
-            
-            selectedFile = file;
-            const preview = document.getElementById('previewImg');
-            preview.src = URL.createObjectURL(file);
-            document.getElementById('previewWrap').classList.remove('hidden');
-            dropZone.classList.add('hidden');
-        }
-    </script>
+function addModalTag() {
+  const inp = document.getElementById('modal-tag-input');
+  let t = inp.value.trim().replace(/\s+/g,'').toLowerCase();
+  if (!t) return;
+  if (!t.startsWith('#')) t='#'+t;
+  if (!modalTags.includes(t)) { modalTags.push(t); renderModalTags(); }
+  inp.value='';
+}
+function removeModalTag(i) { modalTags.splice(i,1); renderModalTags(); }
+function renderModalTags() {
+  const list = document.getElementById('modal-tag-list');
+  list.innerHTML='';
+  modalTags.forEach((tag,i)=>{ const p=document.createElement('span'); p.className='tag-pill'; p.innerHTML=`${tag} <button onclick="removeModalTag(${i})">×</button>`; list.appendChild(p); });
+}
 
-    <script type="module">
-        const { createClient } = supabase;
-        const sb = createClient(
-            'https://ifarghceexpsfyfatjkb.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
-        );
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])loadPreview(e.dataTransfer.files[0]);});
+document.getElementById('file-input').addEventListener('change',e=>{if(e.target.files[0])loadPreview(e.target.files[0]);});
 
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) {
-            window.location.href = 'login.html';
-            return;
-        }
-        
-        const userId = session.user.id;
-        const userEmail = session.user.email;
-        
-        document.getElementById('loadingState').classList.add('hidden');
-        
-        // Check for existing album
-        const { data: albums } = await sb
-            .from('couple_albums')
-            .select('*')
-            .or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
-        
-        if (!albums?.length) {
-            // No album - show invite UI
-            document.getElementById('noAlbumState').classList.remove('hidden');
-            
-            // Check for pending invites
-            const { data: pending } = await sb
-                .from('couple_albums')
-                .select('*')
-                .eq('partner_email', userEmail)
-                .is('partner_id', null);
-            
-            if (pending?.length) {
-                document.getElementById('pendingInvites').classList.remove('hidden');
-                const list = document.getElementById('pendingInvites');
-                
-                pending.forEach(inv => {
-                    const div = document.createElement('div');
-                    div.className = 'invite-card flex items-center justify-between';
-                    div.innerHTML = `
-                        <div>
-                            <p class="text-[#c2185b]">Lời mời từ</p>
-                            <p class="text-[#6b5240]">${inv.owner_email || 'Người dùng'}</p>
-                        </div>
-                        <button class="px-4 py-2 bg-[#e91e8c] text-white rounded-xl hover:bg-[#c2185b]" data-id="${inv.id}">
-                            Chấp nhận
-                        </button>
-                    `;
-                    
-                    div.querySelector('button').addEventListener('click', async () => {
-                        const { error } = await sb
-                            .from('couple_albums')
-                            .update({ partner_id: userId })
-                            .eq('id', inv.id);
-                        
-                        if (error) {
-                            alert('Lỗi: ' + error.message);
-                        } else {
-                            alert('Đã tham gia album!');
-                            location.reload();
-                        }
-                    });
-                    
-                    list.appendChild(div);
-                });
-            }
-            
-            window.sendInvite = async function() {
-                const email = document.getElementById('inviteEmail').value.trim();
-                if (!email || !email.includes('@')) {
-                    alert('Email không hợp lệ');
-                    return;
-                }
-                
-                const { error } = await sb
-                    .from('couple_albums')
-                    .insert({
-                        owner_id: userId,
-                        owner_email: userEmail,
-                        partner_email: email,
-                        partner_id: null
-                    });
-                
-                if (error) {
-                    alert('Lỗi: ' + error.message);
-                } else {
-                    alert('Đã gửi lời mời!');
-                    document.getElementById('inviteEmail').value = '';
-                }
-            };
-            
-            return;
-        }
-        
-        // Has album
-        const album = albums[0];
-        currentAlbum = album;
-        
-        document.getElementById('hasAlbumState').classList.remove('hidden');
-        document.getElementById('uploadBtn').classList.remove('hidden');
-        
-        const isOwner = album.owner_id === userId;
-        const partnerName = isOwner ? (album.partner_email || 'Partner') : (album.owner_email || 'Partner');
-        
-        document.getElementById('partnerEmail').textContent = partnerName;
-        document.getElementById('partnerAvatar').textContent = partnerName[0].toUpperCase();
-        
-        // Day counter
-        function updateCounter(dateStr) {
-            const display = document.getElementById('counterDisplay');
-            if (!dateStr) {
-                display.classList.add('hidden');
-                return;
-            }
-            
-            const anniversary = new Date(dateStr + 'T00:00:00');
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const diffDays = Math.floor((today - anniversary) / (1000 * 60 * 60 * 24));
-            const dayStr = `${anniversary.getDate()}/${anniversary.getMonth() + 1}/${anniversary.getFullYear()}`;
-            
-            if (diffDays >= 0) {
-                display.textContent = `💕 Đã ${diffDays} ngày kể từ ${dayStr}`;
-            } else {
-                display.textContent = `⏳ Còn ${Math.abs(diffDays)} ngày đến ${dayStr}`;
-            }
-            
-            display.classList.remove('hidden');
-        }
-        
-        if (album.anniversary_date) {
-            document.getElementById('anniversaryInput').value = album.anniversary_date;
-            updateCounter(album.anniversary_date);
-        }
-        
-        window.saveAnniversary = async function() {
-            const date = document.getElementById('anniversaryInput').value;
-            if (!date) {
-                alert('Vui lòng chọn ngày');
-                return;
-            }
-            
-            const { error } = await sb
-                .from('couple_albums')
-                .update({ anniversary_date: date })
-                .eq('id', album.id);
-            
-            if (error) {
-                alert('Lỗi: ' + error.message);
-            } else {
-                updateCounter(date);
-                alert('Đã lưu mốc ngày!');
-            }
-        };
-        
-        // Load photos
-        const { data: photos } = await sb
-            .from('couple_photos')
-            .select('*')
-            .eq('album_id', album.id)
-            .order('created_at', { ascending: false });
-        
-        document.getElementById('photoCount').textContent = `${photos?.length || 0} ảnh`;
-        
-        if (!photos?.length) {
-            document.getElementById('emptyPhotos').classList.remove('hidden');
-        } else {
-            const wall = document.getElementById('photoWall');
-            const rotations = [-4, -2, 0, 2, 4, -3, 3, -1, 1];
-            
-            // Duplicate for seamless loop
-            let displayPhotos = [...photos];
-            while (displayPhotos.length < 8) {
-                displayPhotos = [...displayPhotos, ...photos];
-            }
-            displayPhotos = [...displayPhotos, ...displayPhotos];
-            
-            displayPhotos.forEach((photo, i) => {
-                const rotation = rotations[i % rotations.length];
-                
-                const card = document.createElement('div');
-                card.className = 'polaroid';
-                card.style.transform = `rotate(${rotation}deg)`;
-                
-                card.innerHTML = `
-                    <div class="pin">
-                        <div class="pin-head"></div>
-                        <div class="pin-body"></div>
-                    </div>
-                    <img src="${photo.image_url}" alt="${photo.note || 'Memory'}" loading="lazy">
-                    <p class="text-center text-sm text-[#6b5240] mt-2 truncate">${photo.note || '💝'}</p>
-                `;
-                
-                card.addEventListener('click', () => {
-                    window.location.href = `viewer.html?id=${photo.id}&source=couple&album=${album.id}`;
-                });
-                
-                wall.appendChild(card);
-            });
-            
-            // Pause on hover
-            wall.addEventListener('mouseenter', () => wall.classList.add('paused'));
-            wall.addEventListener('mouseleave', () => wall.classList.remove('paused'));
-        }
-        
-        // Save photo
-        window.savePhoto = async function() {
-            if (!selectedFile) {
-                alert('Vui lòng chọn ảnh');
-                return;
-            }
-            
-            const btn = document.getElementById('saveBtn');
-            btn.disabled = true;
-            btn.textContent = 'Đang lưu...';
-            
-            try {
-                const ext = selectedFile.name.split('.').pop() || 'jpg';
-                const photoId = crypto.randomUUID();
-                const path = `couples/${album.id}/${photoId}.${ext}`;
-                
-                const { error: uploadError } = await sb.storage
-                    .from('memories')
-                    .upload(path, selectedFile);
-                
-                if (uploadError) throw uploadError;
-                
-                const { data: { publicUrl } } = sb.storage
-                    .from('memories')
-                    .getPublicUrl(path);
-                
-                const note = document.getElementById('photoNote').value.trim();
-                
-                const { error: dbError } = await sb
-                    .from('couple_photos')
-                    .insert({
-                        album_id: album.id,
-                        image_url: publicUrl,
-                        note: note || null,
-                        uploader_id: userId
-                    });
-                
-                if (dbError) throw dbError;
-                
-                alert('Đã lưu!');
-                location.reload();
-            } catch (err) {
-                console.error(err);
-                alert('Lỗi: ' + err.message);
-                btn.disabled = false;
-                btn.textContent = 'Lưu kỷ niệm 💝';
-            }
-        };
-    </script>
+function loadPreview(file) {
+  if(!file.type.startsWith('image/')){showToast('Vui lòng chọn file ảnh.');return;}
+  if(file.size>10*1024*1024){showToast('File quá lớn (tối đa 10 MB).');return;}
+  selectedFile=file;
+  document.getElementById('modal-preview').src=URL.createObjectURL(file);
+  document.getElementById('modal-preview-wrap').classList.remove('hidden');
+  document.getElementById('drop-zone').classList.add('hidden');
+}
+</script>
+
+<!-- Supabase module -->
+<script type="module">
+const { createClient } = supabase;
+const sb = createClient(
+  'https://ifarghceexpsfyfatjkb.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
+);
+
+const { data: { session } } = await sb.auth.getSession();
+if (!session) { location.href = 'login.html'; }
+const userId    = session.user.id;
+const userEmail = session.user.email;
+
+const { data: albums } = await sb.from('couple_albums').select('*')
+  .or(`owner_id.eq.${userId},partner_id.eq.${userId}`).limit(1);
+
+document.getElementById('loading-state').classList.add('hidden');
+
+if (!albums?.length) {
+  document.getElementById('no-album').classList.remove('hidden');
+
+  const { data: pending } = await sb.from('couple_albums').select('*')
+    .eq('partner_email', userEmail).is('partner_id', null);
+
+  if (pending?.length) {
+    document.getElementById('pending-invites-wrap').classList.remove('hidden');
+    const list = document.getElementById('pending-invites-list');
+    pending.forEach(inv => {
+      const card = document.createElement('div');
+      card.className = 'invite-box flex items-center justify-between';
+      card.innerHTML = `<div><p class="font-['Caveat'] text-lg text-[#c2185b]">Lời mời từ</p><p class="text-sm text-[#6b5240]">${inv.owner_email||inv.owner_id}</p></div>
+        <button class="px-4 py-2 rounded-xl bg-[#e91e8c] text-white text-sm hover:bg-[#c2185b] transition" data-id="${inv.id}">Chấp nhận 💝</button>`;
+      card.querySelector('button').addEventListener('click', async () => {
+        const { error } = await sb.from('couple_albums').update({ partner_id: userId }).eq('id', inv.id);
+        if (error) { showToast('Lỗi khi chấp nhận lời mời.'); return; }
+        showToast('Đã tham gia album! 💝');
+        setTimeout(() => location.reload(), 1000);
+      });
+      list.appendChild(card);
+    });
+  }
+
+  window.sendInvite = async function() {
+    const email = document.getElementById('invite-email').value.trim();
+    if (!email || !email.includes('@')) { showToast('Email không hợp lệ.'); return; }
+    const { error } = await sb.from('couple_albums').insert({ owner_id:userId, owner_email:userEmail, partner_email:email, partner_id:null });
+    if (error) { showToast('Lỗi: ' + error.message); return; }
+    showToast('Đã gửi lời mời đến ' + email + ' 💌');
+    document.getElementById('invite-email').value = '';
+  };
+  return;
+}
+
+// Has album
+const album = albums[0];
+document.getElementById('has-album').classList.remove('hidden');
+document.getElementById('upload-btn').classList.remove('hidden');
+document.getElementById('upload-btn-placeholder').classList.add('hidden');
+
+const isOwner = album.owner_id === userId;
+const partnerEmail = isOwner ? (album.partner_email||'Partner') : (album.owner_email||'Partner');
+document.getElementById('partner-email-label').textContent = partnerEmail;
+document.getElementById('partner-avatar').textContent = partnerEmail[0].toUpperCase();
+
+// ── Day Counter ──
+function renderCounter(dateStr) {
+  const box = document.getElementById('counter-display');
+  if (!dateStr) { box.classList.add('hidden'); return; }
+  const ann   = new Date(dateStr + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff  = Math.floor((today - ann) / 86400000);
+  const d     = ann.getDate(), m = ann.getMonth()+1, y = ann.getFullYear();
+  if (diff >= 0) {
+    box.textContent = `💕 Đã ${diff} ngày kể từ ${d}/${m}/${y}`;
+  } else {
+    box.textContent = `⏳ Còn ${Math.abs(diff)} ngày đến ${d}/${m}/${y}`;
+  }
+  box.classList.remove('hidden');
+}
+
+if (album.anniversary_date) {
+  document.getElementById('anniversary-input').value = album.anniversary_date;
+  renderCounter(album.anniversary_date);
+}
+
+window.saveAnniversary = async function() {
+  const val = document.getElementById('anniversary-input').value;
+  if (!val) { showToast('Vui lòng chọn ngày.'); return; }
+  const { error } = await sb.from('couple_albums').update({ anniversary_date: val }).eq('id', album.id);
+  if (error) { showToast('Lỗi: ' + error.message); return; }
+  renderCounter(val);
+  showToast('Đã lưu mốc ngày! 💝');
+};
+
+// Fairy lights
+const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#f48fb1','#e91e8c','#f8bbd0'];
+const bar = document.getElementById('fairy-lights-bar');
+for (let i = 0; i < Math.floor(window.innerWidth/36)+2; i++) {
+  const b = document.createElement('div');
+  b.className = 'bulb';
+  b.style.cssText = `left:${i*36+10}px;background:${COLORS[i%COLORS.length]};box-shadow:0 0 6px 2px ${COLORS[i%COLORS.length]}88;animation-delay:${i*0.15}s`;
+  bar.appendChild(b);
+}
+
+// Load photos
+const { data: photos } = await sb.from('couple_photos').select('*').eq('album_id', album.id).order('created_at',{ascending:false});
+document.getElementById('wall-loading').classList.add('hidden');
+document.getElementById('photo-count-badge').textContent = `${photos?.length||0} ảnh`;
+
+if (!photos?.length) {
+  document.getElementById('empty-photos').classList.remove('hidden');
+} else {
+  const strip = document.getElementById('scroll-strip');
+  strip.classList.remove('hidden');
+  const MIN = 6;
+  let base = [...photos];
+  while (base.length < MIN) base = [...base, ...photos];
+  const doubled = [...base, ...base];
+  const rots = [-4,-2,0,2,4,-3,3,-1,1];
+
+  doubled.forEach((p,i) => {
+    const rot = rots[i%rots.length];
+    const card = document.createElement('div');
+    card.className = 'polaroid';
+    card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
+    card.innerHTML = `
+      <div class="pin"><div class="pin-head"></div><div class="pin-body"></div></div>
+      <img src="${p.image_url}" alt="${p.note||'Couple memory'}" loading="lazy" draggable="false"/>
+      <p class="caption">${p.note?p.note.slice(0,26):'💝'}</p>
+    `;
+    card.addEventListener('click',()=>{ location.href=`viewer.html?id=${p.id}&source=couple&album=${album.id}`; });
+    strip.appendChild(card);
+  });
+
+  // RAF scroll
+  let pos = 0, paused = false;
+  const speed = 0.42;
+  let wTimer;
+  function loop() {
+    if (!paused) {
+      pos -= speed;
+      const half = strip.scrollWidth / 2;
+      if (half > 0 && Math.abs(pos) >= half) pos = 0;
+      strip.style.transform = `translateX(${pos}px)`;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  const c = document.getElementById('wall-container');
+  c.addEventListener('mouseenter',()=>paused=true);
+  c.addEventListener('mouseleave',()=>paused=false);
+  c.addEventListener('wheel',e=>{ e.preventDefault(); pos-=e.deltaY*1.2; paused=true; clearTimeout(wTimer); wTimer=setTimeout(()=>paused=false,1500); },{passive:false});
+}
+
+// Save photo
+window.saveCouplPhoto = async function() {
+  if (!window.selectedFile) { showToast('Vui lòng chọn ảnh trước!'); return; }
+  const btn = document.getElementById('modal-save-btn');
+  btn.disabled=true; btn.textContent='Đang lưu…';
+  try {
+    const ext = window.selectedFile.name.split('.').pop()||'jpg';
+    const pid = crypto.randomUUID();
+    const path = `couples/${album.id}/${pid}.${ext}`;
+    const { error:upErr } = await sb.storage.from('memories').upload(path, window.selectedFile, {contentType:window.selectedFile.type});
+    if (upErr) throw upErr;
+    const { data:{publicUrl} } = sb.storage.from('memories').getPublicUrl(path);
+    const note = document.getElementById('modal-note').value.trim();
+    const { error:dbErr } = await sb.from('couple_photos').insert({ album_id:album.id, image_url:publicUrl, note:note||null, hashtags:window.modalTags, uploader_id:userId });
+    if (dbErr) throw dbErr;
+    showToast('Đã lưu! 💝');
+    setTimeout(()=>location.reload(),1400);
+  } catch(err) {
+    console.error(err);
+    showToast('Lỗi: '+(err.message||'Đã xảy ra lỗi.'));
+    btn.disabled=false; btn.textContent='Lưu kỷ niệm 💝';
+  }
+};
+</script>
 </body>
 </html>
+
