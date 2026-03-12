@@ -1,257 +1,226 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dòng thời gian - Memories Wall</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { font-family: 'Patrick Hand', cursive; }
-        body { background: #f5ede0; }
-        
-        .timeline-year {
-            font-size: clamp(1.8rem, 5vw, 2.5rem);
-            color: #8B6343;
-            border-bottom: 2px dashed #c8a96e;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .timeline-month {
-            font-size: clamp(1.2rem, 4vw, 1.5rem);
-            color: #a07840;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-            padding-left: 0.5rem;
-            border-left: 4px solid #c8a96e;
-        }
-        
-        .timeline-day {
-            font-size: 1.1rem;
-            color: #b09070;
-            margin: 1rem 0 0.5rem;
-            padding-left: 1rem;
-        }
-        
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 1rem;
-            padding: 0.5rem 0;
-        }
-        
-        @media (min-width: 640px) {
-            .photo-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 1.5rem;
-            }
-        }
-        
-        @media (min-width: 1024px) {
-            .photo-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            }
-        }
-        
-        .polaroid {
-            background: #fffdf7;
-            padding: 0.5rem 0.5rem 1.5rem;
-            box-shadow: 3px 4px 14px rgba(0,0,0,0.15);
-            border-radius: 2px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            transform-origin: center;
-        }
-        
-        .polaroid:hover {
-            transform: scale(1.05) rotate(0deg) !important;
-            box-shadow: 8px 12px 28px rgba(0,0,0,0.25);
-        }
-        
-        .polaroid img {
-            width: 100%;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-        }
-        
-        .frame-retro { border: 5px solid #8B6343; }
-        .frame-modern { border: 2px solid #333; border-radius: 8px; }
-        .frame-christmas { border: 5px solid #c0392b; box-shadow: 0 0 0 2px #27ae60; }
-        .frame-valentine { border: 5px solid #e91e8c; }
-        .frame-tet { border: 5px solid #e53935; box-shadow: 0 0 0 2px #ffd600; }
-        
-        .skeleton {
-            background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dòng thời gian – Memories Wall</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
+* { box-sizing: border-box; }
+body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; }
+
+/* ── Year heading ── */
+.year-heading {
+  font-family: 'Caveat', cursive; font-size: 2rem; font-weight: 600;
+  color: #8B6343; padding: 0 1rem;
+  display: flex; align-items: center; gap: 12px;
+}
+.year-heading::after {
+  content: ''; flex: 1; height: 2px;
+  background: linear-gradient(to right, #c8a96e, transparent);
+  border-radius: 1px;
+}
+
+/* ── Month heading ── */
+.month-heading {
+  font-family: 'Caveat', cursive; font-size: 1.2rem;
+  color: #a07840; padding: 0 1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.month-dot { width:8px; height:8px; border-radius:50%; background:#c8a96e; flex-shrink:0; }
+
+/* ── Day heading ── */
+.day-heading {
+  font-family: 'Caveat', cursive; font-size:1rem; color:#b09070;
+  padding: 0 1rem; margin-top: 4px;
+}
+
+/* ── Photo grid row (horizontal wrap) ── */
+.day-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 1rem 4px;
+}
+
+/* ── Polaroid ── */
+.polaroid {
+  background: #fffdf7; padding: 7px 7px 24px;
+  box-shadow: 2px 4px 12px rgba(0,0,0,.14);
+  border-radius: 2px; cursor: pointer; position: relative;
+  width: 130px; flex-shrink: 0;
+  transition: transform .2s, box-shadow .2s;
+}
+@media (min-width:480px) { .polaroid { width:150px; } }
+.polaroid:hover { transform: scale(1.05); box-shadow:5px 8px 22px rgba(0,0,0,.22); z-index:2; }
+.polaroid img { width:100%; height:110px; object-fit:cover; display:block; border-radius:1px; }
+@media (min-width:480px) { .polaroid img { height:130px; } }
+.polaroid .caption { font-family:'Caveat',cursive; font-size:11px; color:#6b5240; text-align:center; margin-top:4px; line-height:1.3; }
+
+.frame-retro     { border:5px solid #8B6343; }
+.frame-modern    { border:2px solid #333; border-radius:6px; }
+.frame-christmas { border:5px solid #c0392b; box-shadow:0 0 0 2px #27ae60; }
+.frame-valentine { border:5px solid #e91e8c; }
+.frame-tet       { border:5px solid #e53935; box-shadow:0 0 0 2px #ffd600; }
+
+.sticker-on-img { position:absolute; font-size:1rem; pointer-events:none; line-height:1; }
+
+/* ── Divider ── */
+.year-divider { border:none; border-top:2px dashed #e8d5be; margin:1.5rem 1rem; }
+
+.skeleton { background:linear-gradient(90deg,#e8d5be 25%,#f5ede0 50%,#e8d5be 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
 </head>
 <body class="min-h-screen">
-    <header class="sticky top-0 z-40 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be] px-4 py-3">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="text-2xl text-[#8B6343] hover:text-[#b94040]">←</a>
-            <h1 class="text-2xl md:text-3xl text-[#8B6343]">📅 Dòng thời gian</h1>
-            <div class="w-8"></div>
-        </div>
-    </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Loading State -->
-        <div id="loadingState" class="space-y-6">
-            <div class="skeleton h-12 w-48 rounded-full"></div>
-            <div class="photo-grid">
-                {[...Array(6)].map((_, i) => (
-                    `<div key={i} class="skeleton" style="padding-top: 100%;"></div>`
-                )).join('')}
-            </div>
-        </div>
+<header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
+  <a href="index.html" class="text-[#8B6343] text-xl" aria-label="Quay lại">←</a>
+  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">📅 Dòng thời gian</h1>
+  <div class="w-6"></div>
+</header>
 
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden text-center py-16">
-            <p class="text-6xl mb-4">📅</p>
-            <p class="text-2xl text-[#b09070] mb-2">Chưa có kỷ niệm nào</p>
-            <a href="upload.html" class="text-[#c8a96e] hover:underline">Tải ảnh đầu tiên lên</a>
-        </div>
+<main class="max-w-2xl mx-auto pt-4 pb-16">
+  <!-- Skeleton -->
+  <div id="skeleton" class="space-y-6 px-4 pt-2">
+    <div class="skeleton h-8 w-24 rounded-full"></div>
+    <div class="flex gap-3 flex-wrap">
+      <div class="skeleton w-32 h-40 rounded-sm flex-shrink-0"></div>
+      <div class="skeleton w-32 h-40 rounded-sm flex-shrink-0"></div>
+      <div class="skeleton w-32 h-40 rounded-sm flex-shrink-0"></div>
+    </div>
+  </div>
 
-        <!-- Timeline Content -->
-        <div id="timelineContent" class="hidden space-y-8"></div>
-    </main>
+  <!-- Empty -->
+  <div id="empty-state" class="hidden text-center py-24">
+    <p class="font-['Caveat'] text-2xl text-[#b09070]">Chưa có kỷ niệm nào 🍂</p>
+    <a href="upload.html" class="text-sm text-[#8B6343] underline mt-3 inline-block">Tải ảnh đầu tiên lên</a>
+  </div>
 
-    <script type="module">
-        const { createClient } = supabase;
-        const sb = createClient(
-            'https://ifarghceexpsfyfatjkb.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
-        );
+  <!-- Timeline -->
+  <div id="timeline" class="hidden space-y-6"></div>
+</main>
 
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) {
-            window.location.href = 'login.html';
-            return;
+<script type="module">
+const { createClient } = supabase;
+const sb = createClient(
+  'https://ifarghceexpsfyfatjkb.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
+);
+
+const { data: { session } } = await sb.auth.getSession();
+if (!session) { location.href = 'login.html'; }
+const userId = session.user.id;
+
+const { data: photos, error } = await sb
+  .from('photos').select('*')
+  .eq('user_id', userId)
+  .order('created_at', { ascending: false }); // Newest first
+
+document.getElementById('skeleton').classList.add('hidden');
+
+if (error || !photos?.length) {
+  document.getElementById('empty-state').classList.remove('hidden');
+  return;
+}
+
+// Group: Year → Month → Day
+const MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+const grouped = {}; // { year: { month: { day: [photos] } } }
+photos.forEach(p => {
+  const d = new Date(p.created_at);
+  const y = d.getFullYear(), m = d.getMonth(), dd = d.getDate();
+  if (!grouped[y])       grouped[y]       = {};
+  if (!grouped[y][m])    grouped[y][m]    = {};
+  if (!grouped[y][m][dd]) grouped[y][m][dd] = [];
+  grouped[y][m][dd].push(p);
+});
+
+const years = Object.keys(grouped).map(Number).sort((a,b) => b-a);
+const rots  = [-3,-1.5,0,1.5,3,-2,2,-1,1];
+const tl    = document.getElementById('timeline');
+
+years.forEach((year, yi) => {
+  // Year heading
+  const yh = document.createElement('div');
+  yh.className = 'year-heading mt-4';
+  yh.innerHTML = `<span>📆 ${year}</span>`;
+  tl.appendChild(yh);
+
+  const months = Object.keys(grouped[year]).map(Number).sort((a,b)=>b-a);
+
+  months.forEach(month => {
+    // Month heading
+    const mh = document.createElement('div');
+    mh.className = 'month-heading';
+    mh.innerHTML = `<span class="month-dot"></span>${MONTHS[month]}`;
+    tl.appendChild(mh);
+
+    const days = Object.keys(grouped[year][month]).map(Number).sort((a,b)=>b-a);
+
+    days.forEach(day => {
+      // Day heading
+      const dh = document.createElement('div');
+      dh.className = 'day-heading';
+      dh.textContent = `Ngày ${day}/${month+1}`;
+      tl.appendChild(dh);
+
+      // Day grid
+      const grid = document.createElement('div');
+      grid.className = 'day-grid';
+
+      grouped[year][month][day].forEach((p, idx) => {
+        const rot  = rots[idx % rots.length];
+        const card = document.createElement('div');
+        card.className = 'polaroid';
+        if (p.frame && p.frame !== 'none' && p.frame !== 'polaroid') card.classList.add('frame-' + p.frame);
+        card.style.transform = `rotate(${rot}deg)`;
+
+        const imgWrap = document.createElement('div');
+        imgWrap.style.position = 'relative';
+        const img = document.createElement('img');
+        img.src = p.image_url; img.alt = p.note||'Memory'; img.loading = 'lazy';
+        imgWrap.appendChild(img);
+
+        if (p.stickers?.length) {
+          p.stickers.forEach(s => {
+            const sp = document.createElement('span');
+            sp.className = 'sticker-on-img';
+            sp.textContent = s.emoji;
+            sp.style.left = s.left; sp.style.top = s.top;
+            imgWrap.appendChild(sp);
+          });
         }
-        
-        const userId = session.user.id;
-        
-        // Load photos with photo_date or created_at
-        const { data: photos, error } = await sb
-            .from('photos')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        
-        document.getElementById('loadingState').classList.add('hidden');
-        
-        if (error || !photos?.length) {
-            document.getElementById('emptyState').classList.remove('hidden');
-            return;
-        }
-        
-        document.getElementById('timelineContent').classList.remove('hidden');
-        
-        // Group photos by year/month/day
-        const grouped = {};
-        const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-                           'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
-        
-        photos.forEach(photo => {
-            // Use photo_date if available, otherwise created_at
-            const dateStr = photo.photo_date || photo.created_at;
-            const date = new Date(dateStr);
-            
-            if (isNaN(date.getTime())) return;
-            
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            const day = date.getDate();
-            
-            if (!grouped[year]) grouped[year] = {};
-            if (!grouped[year][month]) grouped[year][month] = {};
-            if (!grouped[year][month][day]) grouped[year][month][day] = [];
-            
-            grouped[year][month][day].push(photo);
-        });
-        
-        // Sort years descending
-        const years = Object.keys(grouped).map(Number).sort((a, b) => b - a);
-        const rotations = [-3, -1.5, 0, 1.5, 3, -2, 2, -1, 1];
-        
-        const timelineEl = document.getElementById('timelineContent');
-        
-        years.forEach((year, yearIndex) => {
-            // Year section
-            const yearDiv = document.createElement('div');
-            yearDiv.className = 'space-y-4';
-            
-            const yearHeading = document.createElement('h2');
-            yearHeading.className = 'timeline-year';
-            yearHeading.textContent = `📆 ${year}`;
-            yearDiv.appendChild(yearHeading);
-            
-            const months = Object.keys(grouped[year]).map(Number).sort((a, b) => b - a);
-            
-            months.forEach(month => {
-                // Month heading
-                const monthHeading = document.createElement('h3');
-                monthHeading.className = 'timeline-month';
-                monthHeading.textContent = monthNames[month];
-                yearDiv.appendChild(monthHeading);
-                
-                const days = Object.keys(grouped[year][month]).map(Number).sort((a, b) => b - a);
-                
-                days.forEach(day => {
-                    // Day heading
-                    const dayHeading = document.createElement('h4');
-                    dayHeading.className = 'timeline-day';
-                    dayHeading.textContent = `Ngày ${day}`;
-                    yearDiv.appendChild(dayHeading);
-                    
-                    // Photo grid
-                    const grid = document.createElement('div');
-                    grid.className = 'photo-grid';
-                    
-                    grouped[year][month][day].forEach((photo, index) => {
-                        const rotation = rotations[index % rotations.length];
-                        
-                        const card = document.createElement('div');
-                        card.className = 'polaroid';
-                        if (photo.frame && photo.frame !== 'none') {
-                            card.classList.add(`frame-${photo.frame}`);
-                        }
-                        card.style.transform = `rotate(${rotation}deg)`;
-                        
-                        card.innerHTML = `
-                            <img src="${photo.image_url}" alt="${photo.note || 'Memory'}" loading="lazy">
-                            <p class="text-center text-sm text-[#6b5240] mt-2 truncate">${photo.note || '✦'}</p>
-                        `;
-                        
-                        card.addEventListener('click', () => {
-                            window.location.href = `viewer.html?id=${photo.id}`;
-                        });
-                        
-                        grid.appendChild(card);
-                    });
-                    
-                    yearDiv.appendChild(grid);
-                });
-            });
-            
-            timelineEl.appendChild(yearDiv);
-            
-            // Add divider between years
-            if (yearIndex < years.length - 1) {
-                const hr = document.createElement('hr');
-                hr.className = 'border-t-2 border-dashed border-[#e8d5be] my-8';
-                timelineEl.appendChild(hr);
-            }
-        });
-    </script>
+
+        const caption = document.createElement('p');
+        caption.className = 'caption';
+        caption.textContent = p.note ? p.note.slice(0,20) : '';
+
+        card.appendChild(imgWrap);
+        card.appendChild(caption);
+        card.addEventListener('click', () => location.href = `viewer.html?id=${p.id}`);
+        grid.appendChild(card);
+      });
+
+      tl.appendChild(grid);
+    });
+  });
+
+  // Divider between years
+  if (yi < years.length - 1) {
+    const hr = document.createElement('hr');
+    hr.className = 'year-divider';
+    tl.appendChild(hr);
+  }
+});
+
+document.getElementById('timeline').classList.remove('hidden');
+</script>
 </body>
 </html>
+
+
