@@ -1,249 +1,308 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Xem ảnh – Memories Wall</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
-* { box-sizing: border-box; }
-body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; min-height:100dvh; }
-
-.polaroid-card {
-  background:#fffdf7; padding:12px 12px 44px;
-  box-shadow:4px 6px 24px rgba(0,0,0,.18),0 1px 4px rgba(0,0,0,.08);
-  border-radius:2px; position:relative; width:100%; max-width:400px; margin:0 auto;
-}
-.polaroid-card img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; border-radius:1px; }
-
-.frame-retro     .polaroid-card { border:6px solid #8B6343; }
-.frame-modern    .polaroid-card { border:3px solid #333; border-radius:8px; }
-.frame-christmas .polaroid-card { border:6px solid #c0392b; box-shadow:0 0 0 3px #27ae60; }
-.frame-valentine .polaroid-card { border:6px solid #e91e8c; }
-.frame-tet       .polaroid-card { border:6px solid #e53935; box-shadow:0 0 0 3px #ffd600; }
-
-.sticker-on-img { position:absolute; font-size:1.8rem; pointer-events:none; line-height:1; }
-
-.tag-pill {
-  display:inline-block; background:#f0e0cc; color:#8B6343;
-  border-radius:20px; padding:4px 14px; font-size:14px;
-  text-decoration:none; transition:background .15s; font-family:'Caveat',cursive;
-}
-.tag-pill:hover { background:#e8d0b0; }
-
-/* Delete button */
-#delete-btn {
-  position:absolute; top:8px; right:8px; z-index:10;
-  width:32px; height:32px; border-radius:50%;
-  background:rgba(185,64,64,0.85); color:#fff;
-  border:none; font-size:18px; line-height:1;
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.25); transition:background .15s;
-}
-#delete-btn:hover { background:rgba(185,64,64,1); }
-
-.skeleton {
-  background:linear-gradient(90deg,#e8d5be 25%,#f5ede0 50%,#e8d5be 75%);
-  background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px;
-}
-@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-#toast {
-  position:fixed; bottom:24px; left:50%;
-  transform:translateX(-50%) translateY(80px);
-  background:#3d2b1f; color:#fff; padding:10px 22px;
-  border-radius:24px; font-size:14px; z-index:999;
-  transition:transform .3s ease; white-space:nowrap;
-}
-#toast.show { transform:translateX(-50%) translateY(0); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem ảnh - Memories Wall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { font-family: 'Patrick Hand', cursive; }
+        body { background: #f5ede0; }
+        
+        .photo-card {
+            background: #fffdf7;
+            padding: 1rem 1rem 2.5rem;
+            box-shadow: 4px 6px 24px rgba(0,0,0,0.18);
+            border-radius: 2px;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .photo-card img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+        }
+        
+        .pin {
+            position: absolute;
+            top: -1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1.2rem;
+            height: 2rem;
+            z-index: 2;
+        }
+        
+        .frame-retro .photo-card { border: 6px solid #8B6343; }
+        .frame-modern .photo-card { border: 2px solid #333; border-radius: 8px; }
+        .frame-christmas .photo-card { border: 6px solid #c0392b; box-shadow: 0 0 0 3px #27ae60; }
+        .frame-valentine .photo-card { border: 6px solid #e91e8c; }
+        .frame-tet .photo-card { border: 6px solid #e53935; box-shadow: 0 0 0 3px #ffd600; }
+        
+        .sticker {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(185, 64, 64, 0.9);
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .delete-btn:hover {
+            background: #b94040;
+            transform: scale(1.1);
+        }
+        
+        .tag-pill {
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            background: #f0e0cc;
+            color: #8B6343;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .tag-pill:hover {
+            background: #e8d0b0;
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 <body class="min-h-screen">
+    <header class="sticky top-0 z-40 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be] px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="javascript:history.back()" class="text-2xl text-[#8B6343] hover:text-[#b94040]">←</a>
+            <h1 class="text-2xl md:text-3xl text-[#8B6343]">✦ Kỷ niệm</h1>
+            <div class="w-8"></div>
+        </div>
+    </header>
 
-<!-- TOP BAR -->
-<header class="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
-  <a href="index.html" class="text-[#8B6343] text-xl leading-none" aria-label="Quay lại">←</a>
-  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343]">✦ Kỷ niệm</h1>
-  <div class="w-6"></div>
-</header>
-
-<main class="max-w-lg mx-auto px-4 pt-6 pb-16 space-y-6">
-  <!-- Skeleton -->
-  <div id="skeleton" class="space-y-4">
-    <div class="skeleton w-full" style="padding-top:100%; border-radius:2px;"></div>
-    <div class="skeleton h-5 w-3/4 mx-auto rounded-full"></div>
-  </div>
-
-  <!-- Content -->
-  <div id="content" class="hidden space-y-5">
-    <!-- Frame wrapper -->
-    <div id="frame-wrapper">
-      <div class="polaroid-card">
-        <!-- Delete button -->
-        <button id="delete-btn" title="Xóa ảnh">✕</button>
-
-        <!-- Pin -->
-        <div class="pin" style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:12px;height:22px;z-index:2;">
-          <div style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4a96a,#8B5E3C);box-shadow:0 2px 4px rgba(0,0,0,.4);"></div>
-          <div style="width:4px;height:12px;margin:0 auto;background:linear-gradient(to bottom,#a07040,#7a5230);border-radius:0 0 3px 3px;"></div>
+    <main class="max-w-2xl mx-auto px-4 py-6">
+        <!-- Loading -->
+        <div id="loadingState" class="text-center py-8">
+            <p class="text-xl text-[#c8a96e] animate-pulse">Đang tải...</p>
         </div>
 
-        <!-- Image + stickers -->
-        <div id="img-wrap" style="position:relative;">
-          <img id="photo-img" src="" alt="Memory" />
+        <!-- Not Found -->
+        <div id="notFound" class="hidden text-center py-16">
+            <p class="text-6xl mb-4">🍂</p>
+            <p class="text-2xl text-[#b09070] mb-4">Không tìm thấy ảnh</p>
+            <a href="index.html" class="text-[#c8a96e] hover:underline">Về trang chủ</a>
         </div>
 
-        <!-- Caption -->
-        <p id="photo-note" class="font-['Caveat'] text-center text-[#6b5240] text-lg mt-3 px-2"></p>
-      </div>
-    </div>
+        <!-- Photo Content -->
+        <div id="photoContent" class="hidden space-y-6">
+            <div id="frameWrapper">
+                <div class="photo-card">
+                    <button id="deleteBtn" class="delete-btn" title="Xóa ảnh">✕</button>
+                    
+                    <div class="pin">
+                        <div class="w-4 h-4 rounded-full bg-gradient-to-br from-[#d4a96a] to-[#8B5E3C] shadow"></div>
+                        <div class="w-1.5 h-5 mx-auto bg-gradient-to-b from-[#a07040] to-[#7a5230] rounded-b"></div>
+                    </div>
+                    
+                    <div id="imageWrapper" class="relative">
+                        <img id="photoImage" src="" alt="Memory" class="w-full">
+                    </div>
+                    
+                    <p id="photoNote" class="text-center text-xl text-[#6b5240] mt-4"></p>
+                </div>
+            </div>
 
-    <!-- Meta info -->
-    <div id="meta-info" class="text-center space-y-1">
-      <p id="photo-date-display" class="text-sm text-[#b09070] hidden"></p>
-      <p id="upload-date-display" class="text-xs text-[#c8a96e]"></p>
-    </div>
+            <!-- Meta Info -->
+            <div class="text-center space-y-2">
+                <p id="photoDate" class="text-[#b09070] hidden"></p>
+                <p id="uploadDate" class="text-sm text-[#c8a96e]"></p>
+            </div>
 
-    <!-- Hashtags -->
-    <div id="hashtag-section" class="hidden">
-      <p class="font-['Caveat'] text-base text-[#8B6343] mb-2">Hashtag</p>
-      <div id="hashtag-pills" class="flex flex-wrap gap-2"></div>
-    </div>
-  </div>
+            <!-- Hashtags -->
+            <div id="hashtagSection" class="hidden">
+                <h3 class="text-xl text-[#8B6343] mb-3">Hashtag</h3>
+                <div id="hashtagList" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+    </main>
 
-  <!-- Empty -->
-  <div id="not-found" class="hidden text-center py-16">
-    <p class="font-['Caveat'] text-2xl text-[#b09070]">Không tìm thấy ảnh 🍂</p>
-    <a href="index.html" class="text-sm text-[#8B6343] underline mt-3 inline-block">Quay về trang chủ</a>
-  </div>
-</main>
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-20 bg-[#3d2b1f] text-white px-6 py-3 rounded-full text-sm transition-transform duration-300 z-50"></div>
 
-<div id="toast"></div>
+    <script>
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(80px)';
+            }, 2800);
+        }
+    </script>
 
-<script>
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-</script>
+    <script type="module">
+        const { createClient } = supabase;
+        const sb = createClient(
+            'https://ifarghceexpsfyfatjkb.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
+        );
 
-<script type="module">
-const { createClient } = supabase;
-const sb = createClient(
-  'https://ifarghceexpsfyfatjkb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
-);
-
-const { data: { session } } = await sb.auth.getSession();
-if (!session) { location.href = 'login.html'; }
-const userId = session.user.id;
-
-const params   = new URLSearchParams(location.search);
-const photoId  = params.get('id');
-const source   = params.get('source');
-const albumId  = params.get('album');
-
-if (!photoId) { document.getElementById('not-found').classList.remove('hidden'); document.getElementById('skeleton').classList.add('hidden'); return; }
-
-// Load photo
-let photo;
-if (source === 'couple') {
-  const { data } = await sb.from('couple_photos').select('*').eq('id', photoId).single();
-  photo = data;
-} else {
-  const { data } = await sb.from('photos').select('*').eq('id', photoId).eq('user_id', userId).single();
-  photo = data;
-}
-
-document.getElementById('skeleton').classList.add('hidden');
-
-if (!photo) { document.getElementById('not-found').classList.remove('hidden'); return; }
-
-// Render
-document.getElementById('content').classList.remove('hidden');
-document.getElementById('photo-img').src = photo.image_url;
-document.getElementById('photo-note').textContent = photo.note || '';
-
-// Frame
-if (photo.frame && photo.frame !== 'none') {
-  document.getElementById('frame-wrapper').classList.add('frame-' + photo.frame);
-}
-
-// Stickers
-if (photo.stickers?.length) {
-  const wrap = document.getElementById('img-wrap');
-  photo.stickers.forEach(s => {
-    const el = document.createElement('span');
-    el.className = 'sticker-on-img';
-    el.textContent = s.emoji;
-    el.style.left = s.left; el.style.top = s.top;
-    wrap.appendChild(el);
-  });
-}
-
-// Photo date
-if (photo.photo_date) {
-  const pd = document.getElementById('photo-date-display');
-  const d  = new Date(photo.photo_date + 'T00:00:00');
-  pd.textContent = `📅 Ngày chụp: ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-  pd.classList.remove('hidden');
-}
-
-// Upload date
-if (photo.created_at) {
-  const ud = new Date(photo.created_at);
-  document.getElementById('upload-date-display').textContent =
-    `⬆️ Tải lên: ${ud.getDate()}/${ud.getMonth()+1}/${ud.getFullYear()}`;
-}
-
-// Hashtags
-const tags = (photo.hashtags || []).filter(Boolean);
-if (tags.length) {
-  document.getElementById('hashtag-section').classList.remove('hidden');
-  const pillsEl = document.getElementById('hashtag-pills');
-  tags.forEach(t => {
-    const clean = t.replace('#','');
-    const a = document.createElement('a');
-    a.className = 'tag-pill';
-    a.href = `hashtag.html?tag=${encodeURIComponent(clean)}`;
-    a.textContent = '#' + clean;
-    pillsEl.appendChild(a);
-  });
-}
-
-// ── Delete ──
-document.getElementById('delete-btn').addEventListener('click', async () => {
-  if (!confirm('Xóa ảnh này khỏi tài khoản của bạn?')) return;
-
-  try {
-    // Delete from DB
-    if (source === 'couple') {
-      await sb.from('couple_photos').delete().eq('id', photo.id);
-    } else {
-      await sb.from('photos').delete().eq('id', photo.id).eq('user_id', userId);
-    }
-
-    // Delete from Storage
-    const url = photo.image_url;
-    const marker = '/public/memories/';
-    if (url.includes(marker)) {
-      const path = url.split(marker)[1].split('?')[0];
-      await sb.storage.from('memories').remove([decodeURIComponent(path)]);
-    }
-
-    showToast('Đã xóa ảnh ✓');
-    setTimeout(() => {
-      if (source === 'couple') location.href = `couple.html`;
-      else location.href = 'index.html';
-    }, 1200);
-  } catch(err) {
-    console.error(err);
-    showToast('Lỗi: ' + (err.message || 'Không thể xóa'));
-  }
-});
-</script>
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        const userId = session.user.id;
+        
+        const params = new URLSearchParams(location.search);
+        const photoId = params.get('id');
+        const source = params.get('source');
+        const albumId = params.get('album');
+        
+        if (!photoId) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('notFound').classList.remove('hidden');
+            return;
+        }
+        
+        // Load photo
+        let photo;
+        let table = source === 'couple' ? 'couple_photos' : 'photos';
+        
+        try {
+            if (source === 'couple') {
+                const { data } = await sb
+                    .from(table)
+                    .select('*')
+                    .eq('id', photoId)
+                    .single();
+                photo = data;
+            } else {
+                const { data } = await sb
+                    .from(table)
+                    .select('*')
+                    .eq('id', photoId)
+                    .eq('user_id', userId)
+                    .single();
+                photo = data;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        
+        document.getElementById('loadingState').classList.add('hidden');
+        
+        if (!photo) {
+            document.getElementById('notFound').classList.remove('hidden');
+            return;
+        }
+        
+        // Render
+        document.getElementById('photoContent').classList.remove('hidden');
+        document.getElementById('photoImage').src = photo.image_url;
+        document.getElementById('photoNote').textContent = photo.note || '';
+        
+        // Frame
+        if (photo.frame && photo.frame !== 'none') {
+            document.getElementById('frameWrapper').classList.add(`frame-${photo.frame}`);
+        }
+        
+        // Stickers
+        if (photo.stickers?.length) {
+            const wrapper = document.getElementById('imageWrapper');
+            photo.stickers.forEach(s => {
+                const sticker = document.createElement('span');
+                sticker.className = 'sticker';
+                sticker.textContent = s.emoji;
+                sticker.style.left = s.left;
+                sticker.style.top = s.top;
+                wrapper.appendChild(sticker);
+            });
+        }
+        
+        // Photo date
+        if (photo.photo_date) {
+            const d = new Date(photo.photo_date + 'T00:00:00');
+            document.getElementById('photoDate').textContent = 
+                `📅 Ngày chụp: ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+            document.getElementById('photoDate').classList.remove('hidden');
+        }
+        
+        // Upload date
+        if (photo.created_at) {
+            const d = new Date(photo.created_at);
+            document.getElementById('uploadDate').textContent = 
+                `⬆️ Tải lên: ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+        }
+        
+        // Hashtags
+        const tags = (photo.hashtags || []).filter(Boolean);
+        if (tags.length) {
+            document.getElementById('hashtagSection').classList.remove('hidden');
+            const list = document.getElementById('hashtagList');
+            
+            tags.forEach(t => {
+                const clean = t.replace('#', '');
+                const a = document.createElement('a');
+                a.href = `hashtag.html?tag=${encodeURIComponent(clean)}`;
+                a.className = 'tag-pill';
+                a.textContent = '#' + clean;
+                list.appendChild(a);
+            });
+        }
+        
+        // Delete functionality
+        document.getElementById('deleteBtn').addEventListener('click', async () => {
+            if (!confirm('Xóa ảnh này?')) return;
+            
+            try {
+                // Delete from database
+                if (source === 'couple') {
+                    await sb.from('couple_photos').delete().eq('id', photo.id);
+                } else {
+                    await sb.from('photos').delete().eq('id', photo.id).eq('user_id', userId);
+                }
+                
+                // Delete from storage
+                const url = photo.image_url;
+                const marker = '/memories/';
+                if (url.includes(marker)) {
+                    const path = url.split(marker)[1].split('?')[0];
+                    await sb.storage.from('memories').remove([decodeURIComponent(path)]);
+                }
+                
+                showToast('Đã xóa ảnh');
+                setTimeout(() => {
+                    if (source === 'couple') {
+                        window.location.href = 'couple.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }, 1500);
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi: ' + err.message);
+            }
+        });
+    </script>
 </body>
 </html>
