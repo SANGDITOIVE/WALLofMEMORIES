@@ -1,396 +1,87 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Đăng ký - Memories Wall</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { font-family: 'Patrick Hand', cursive; }
-        body { 
-            background: linear-gradient(135deg, #f5ede0 0%, #fdf6ec 100%);
-            min-height: 100vh;
-        }
-        
-        .signup-card {
-            background: rgba(255, 253, 247, 0.95);
-            backdrop-filter: blur(10px);
-            border: 2px solid #e8d5be;
-            border-radius: 2rem;
-            box-shadow: 0 20px 40px -15px rgba(139, 99, 67, 0.3);
-            animation: slideUp 0.5s ease;
-        }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .input-field {
-            border: 2px solid #e8d5be;
-            border-radius: 1rem;
-            padding: 0.75rem 1rem;
-            background: white;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-        }
-        
-        .input-field:focus {
-            border-color: #c8a96e;
-            box-shadow: 0 0 0 4px rgba(200, 169, 110, 0.2);
-            outline: none;
-        }
-        
-        .signup-btn {
-            background: #c8a96e;
-            border-radius: 1rem;
-            padding: 0.75rem;
-            color: white;
-            font-size: 1.3rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            width: 100%;
-            cursor: pointer;
-        }
-        
-        .signup-btn:hover {
-            background: #b8945a;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(200, 169, 110, 0.4);
-        }
-        
-        .signup-btn:active {
-            transform: translateY(0);
-        }
-        
-        .password-strength {
-            height: 4px;
-            border-radius: 2px;
-            margin-top: 0.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .floating-icon {
-            position: absolute;
-            font-size: 2rem;
-            opacity: 0.1;
-            pointer-events: none;
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
-        }
-        
-        .icon-1 { top: 10%; left: 5%; animation-delay: 0s; }
-        .icon-2 { bottom: 15%; right: 8%; animation-delay: 1s; }
-        .icon-3 { top: 20%; right: 12%; animation-delay: 2s; }
-        .icon-4 { bottom: 25%; left: 10%; animation-delay: 3s; }
-        
-        .term-checkbox {
-            width: 1.2rem;
-            height: 1.2rem;
-            border: 2px solid #c8a96e;
-            border-radius: 4px;
-            cursor: pointer;
-            accent-color: #c8a96e;
-        }
-    </style>
-</head>
-<body class="flex items-center justify-center p-4 relative">
-    <!-- Floating decorations -->
-    <div class="floating-icon icon-1">🎉</div>
-    <div class="floating-icon icon-2">💫</div>
-    <div class="floating-icon icon-3">🌟</div>
-    <div class="floating-icon icon-4">✨</div>
-    
-    <!-- Main Sign Up Card -->
-    <div class="signup-card w-full max-w-md p-8 relative z-10">
-        <!-- Logo & Header -->
-        <div class="text-center mb-8">
-            <div class="text-6xl mb-4 animate-bounce">✨</div>
-            <h1 class="text-4xl text-[#8B6343] font-bold tracking-wider">Tạo tài khoản</h1>
-            <p class="text-[#b09070] text-lg mt-2">Bắt đầu hành trình kỷ niệm</p>
-        </div>
-        
-        <!-- Sign Up Form -->
-        <form id="signupForm" class="space-y-4" onsubmit="handleSignUp(event)">
-            <!-- Email Field -->
-            <div>
-                <label class="block text-[#8B6343] text-lg mb-2 ml-1">Email</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-2xl text-[#c8a96e]">📧</span>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        placeholder="your@email.com" 
-                        class="input-field w-full pl-12"
-                        required
-                    >
-                </div>
-            </div>
-            
-            <!-- Password Field -->
-            <div>
-                <label class="block text-[#8B6343] text-lg mb-2 ml-1">Mật khẩu</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-2xl text-[#c8a96e]">🔒</span>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        placeholder="••••••••" 
-                        class="input-field w-full pl-12"
-                        required
-                        minlength="6"
-                        oninput="checkPasswordStrength(this.value)"
-                    >
-                </div>
-                <!-- Password strength indicator -->
-                <div id="strengthBar" class="password-strength bg-gray-200"></div>
-                <p id="strengthText" class="text-xs mt-1 text-[#b09070]">Tối thiểu 6 ký tự</p>
-            </div>
-            
-            <!-- Confirm Password -->
-            <div>
-                <label class="block text-[#8B6343] text-lg mb-2 ml-1">Xác nhận mật khẩu</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-2xl text-[#c8a96e]">🔐</span>
-                    <input 
-                        type="password" 
-                        id="confirmPassword" 
-                        placeholder="••••••••" 
-                        class="input-field w-full pl-12"
-                        required
-                        oninput="checkPasswordMatch(this.value)"
-                    >
-                </div>
-                <p id="matchText" class="text-xs mt-1 text-[#b09070]"></p>
-            </div>
-            
-            <!-- Terms and Conditions -->
-            <div class="flex items-start gap-3 mt-4">
-                <input type="checkbox" id="terms" class="term-checkbox mt-1" required>
-                <label for="terms" class="text-sm text-[#6b5240]">
-                    Tôi đồng ý với 
-                    <a href="#" class="text-[#c8a96e] hover:underline">Điều khoản sử dụng</a> 
-                    và 
-                    <a href="#" class="text-[#c8a96e] hover:underline">Chính sách bảo mật</a>
-                </label>
-            </div>
-            
-            <!-- Sign Up Button -->
-            <button type="submit" id="signupBtn" class="signup-btn mt-6">
-                Đăng ký ngay ✨
-            </button>
-            
-            <!-- Divider -->
-            <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-[#e8d5be]"></div>
-                </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="px-4 bg-[#fdf6ec] text-[#b09070]">hoặc</span>
-                </div>
-            </div>
-            
-            <!-- Login Link -->
-            <p class="text-center text-[#b09070]">
-                Đã có tài khoản? 
-                <a href="login.html" class="text-[#c8a96e] font-semibold hover:text-[#8B6343] transition ml-1">
-                    Đăng nhập ngay 💫
-                </a>
-            </p>
-        </form>
-        
-        <!-- Benefits -->
-        <div class="mt-8 pt-6 border-t border-[#e8d5be] grid grid-cols-3 gap-2 text-center">
-            <div>
-                <div class="text-2xl">📸</div>
-                <div class="text-xs text-[#8B6343]">Lưu ảnh</div>
-            </div>
-            <div>
-                <div class="text-2xl">🏷️</div>
-                <div class="text-xs text-[#8B6343]">Hashtag</div>
-            </div>
-            <div>
-                <div class="text-2xl">💝</div>
-                <div class="text-xs text-[#8B6343]">Couple</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-20 bg-[#3d2b1f] text-white px-6 py-3 rounded-full text-lg transition-transform duration-300 z-50 shadow-2xl">
-        Thông báo
-    </div>
+<title>Signup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <script>
-        // Supabase configuration
-        const SUPABASE_URL = "https://ifarghceexpsfyfatjkb.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ";
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            auth: {
-                autoRefreshToken: true,
-                persistSession: true,
-                detectSessionInUrl: true
-            }
-        });
-        
-        // Toast function
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.style.backgroundColor = isError ? '#b94040' : '#3d2b1f';
-            toast.style.transform = 'translateX(-50%) translateY(0)';
-            
-            setTimeout(() => {
-                toast.style.transform = 'translateX(-50%) translateY(80px)';
-            }, 3000);
-        }
-        
-        // Password strength checker
-        function checkPasswordStrength(password) {
-            const strengthBar = document.getElementById('strengthBar');
-            const strengthText = document.getElementById('strengthText');
-            
-            if (!password) {
-                strengthBar.style.width = '0';
-                strengthBar.style.backgroundColor = '#e8d5be';
-                strengthText.textContent = 'Tối thiểu 6 ký tự';
-                return;
-            }
-            
-            let strength = 0;
-            
-            // Length check
-            if (password.length >= 6) strength += 25;
-            if (password.length >= 8) strength += 15;
-            
-            // Character variety
-            if (/[a-z]/.test(password)) strength += 15;
-            if (/[A-Z]/.test(password)) strength += 15;
-            if (/[0-9]/.test(password)) strength += 15;
-            if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
-            
-            // Cap at 100
-            strength = Math.min(strength, 100);
-            
-            // Update UI
-            strengthBar.style.width = strength + '%';
-            
-            if (strength < 40) {
-                strengthBar.style.backgroundColor = '#b94040';
-                strengthText.textContent = 'Mật khẩu yếu';
-            } else if (strength < 70) {
-                strengthBar.style.backgroundColor = '#f59e0b';
-                strengthText.textContent = 'Mật khẩu trung bình';
-            } else {
-                strengthBar.style.backgroundColor = '#10b981';
-                strengthText.textContent = 'Mật khẩu mạnh';
-            }
-        }
-        
-        // Check password match
-        function checkPasswordMatch(confirmPwd) {
-            const pwd = document.getElementById('password').value;
-            const matchText = document.getElementById('matchText');
-            
-            if (!confirmPwd) {
-                matchText.textContent = '';
-                return;
-            }
-            
-            if (pwd === confirmPwd) {
-                matchText.textContent = '✓ Mật khẩu khớp';
-                matchText.style.color = '#10b981';
-            } else {
-                matchText.textContent = '✗ Mật khẩu không khớp';
-                matchText.style.color = '#b94040';
-            }
-        }
-        
-        // Handle sign up
-        async function handleSignUp(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const terms = document.getElementById('terms').checked;
-            
-            // Validate
-            if (!email || !password || !confirmPassword) {
-                showToast('Vui lòng điền đầy đủ thông tin', true);
-                return;
-            }
-            
-            if (password.length < 6) {
-                showToast('Mật khẩu phải có ít nhất 6 ký tự', true);
-                return;
-            }
-            
-            if (password !== confirmPassword) {
-                showToast('Mật khẩu xác nhận không khớp', true);
-                return;
-            }
-            
-            if (!terms) {
-                showToast('Vui lòng đồng ý với điều khoản', true);
-                return;
-            }
-            
-            // Disable button
-            const btn = document.getElementById('signupBtn');
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = '⏳ Đang xử lý...';
-            
-            try {
-                const { data, error } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: {
-                        emailRedirectTo: window.location.origin + '/login.html'
-                    }
-                });
-                
-                if (error) throw error;
-                
-                showToast('Đăng ký thành công! Vui lòng kiểm tra email để xác nhận 🎉');
-                
-                // Redirect after success
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 3000);
-                
-            } catch (error) {
-                console.error('Signup error:', error);
-                showToast(error.message || 'Đăng ký thất bại', true);
-                
-                // Re-enable button
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
-        }
-        
-        // Check if already logged in
-        window.addEventListener('load', async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                window.location.href = 'index.html';
-            }
-        });
-    </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+
+<style>
+body{
+font-family:sans-serif;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:#f6f2ea;
+}
+
+.box{
+background:white;
+padding:30px;
+border-radius:10px;
+width:300px;
+box-shadow:0 10px 20px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#d4a373;
+border:none;
+color:white;
+cursor:pointer;
+}
+
+a{
+display:block;
+margin-top:10px;
+text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>Create Account</h2>
+
+<input id="email" type="email" placeholder="Email">
+
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="createAccount()">Sign Up</button>
+
+<a href="login.html">Already have account?</a>
+
+</div>
+
+<script>
+
+async function createAccount(){
+
+const email=document.getElementById("email").value
+const password=document.getElementById("password").value
+
+if(!email||!password){
+alert("Enter email and password")
+return
+}
+
+await signup(email,password)
+
+}
+
+</script>
+
 </body>
 </html>
+
