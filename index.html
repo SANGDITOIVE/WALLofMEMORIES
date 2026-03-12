@@ -1,475 +1,400 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Memories Wall</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
-
-* { box-sizing: border-box; }
-body { background: #f5ede0; font-family: 'Be Vietnam Pro', sans-serif; overflow-x: hidden; }
-
-/* ── Fairy lights ── */
-.fairy-lights { position: relative; width: 100%; height: 28px; overflow: hidden; }
-.fairy-lights::before {
-  content: ''; position: absolute; top: 12px; left: 0; right: 0; height: 1.5px;
-  background: repeating-linear-gradient(to right,#c8a96e 0,#c8a96e 18px,transparent 18px,transparent 36px);
-}
-.bulb {
-  position: absolute; top: 8px; width: 9px; height: 13px;
-  border-radius: 50% 50% 45% 45%;
-  animation: glow 2.2s ease-in-out infinite alternate;
-}
-@keyframes glow {
-  from { opacity:.55; filter:blur(.5px); }
-  to   { opacity:1;   filter:blur(1.5px); }
-}
-
-/* ── Rope ── */
-.rope {
-  position: absolute; left: 0; right: 0; height: 4px; top: 0;
-  background: repeating-linear-gradient(to right,#7a5230,#c8a96e 40%,#a0673a 60%,#7a5230);
-  border-radius: 2px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.15);
-}
-
-/* ── Wall rows ── */
-.wall-row {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-}
-
-/* ── Scroll strip (JS-animated) ── */
-.scroll-strip {
-  display: flex;
-  gap: 2rem;
-  padding: 26px 2rem 1rem; /* 26 = rope(4) + clip(22) */
-  width: max-content;
-  will-change: transform;
-  cursor: grab;
-  user-select: none;
-}
-.scroll-strip:active { cursor: grabbing; }
-
-/* ── Polaroid ── */
-.polaroid {
-  background: #fffdf7;
-  padding: 10px 10px 30px;
-  box-shadow: 3px 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.1);
-  border-radius: 2px; flex-shrink: 0; width: 155px;
-  transition: box-shadow 0.25s ease;
-  position: relative; cursor: pointer;
-}
-.polaroid:hover { box-shadow: 6px 10px 28px rgba(0,0,0,0.28); }
-.polaroid img { width:100%; height:130px; object-fit:cover; display:block; border-radius:1px; }
-.polaroid .caption {
-  font-family: 'Caveat', cursive; font-size:13px; color:#6b5240;
-  text-align:center; margin-top:6px; line-height:1.3; min-height:18px;
-}
-.polaroid .tag-row { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; margin-top:4px; }
-.polaroid .tag-row a {
-  font-family:'Caveat',cursive; font-size:11px; color:#a07840;
-  text-decoration:none; background:#f0e0cc; border-radius:10px;
-  padding:1px 7px; pointer-events:all;
-}
-.polaroid .tag-row a:hover { background:#e8d0b0; }
-
-/* ── Wood pin (clip) ── */
-.pin {
-  position: absolute;
-  top: -22px; left: 50%; transform: translateX(-50%);
-  width: 12px; height: 22px;
-  z-index: 2;
-}
-.pin-head {
-  width: 12px; height: 12px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #d4a96a, #8B5E3C);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.3);
-}
-.pin-body {
-  width: 4px; height: 12px; margin: 0 auto;
-  background: linear-gradient(to bottom, #a07040, #7a5230);
-  border-radius: 0 0 3px 3px;
-  box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-
-/* ── User avatar ── */
-.user-avatar {
-  width:30px; height:30px; border-radius:50%;
-  background:linear-gradient(135deg,#c8a96e,#8B6343);
-  color:#fff; font-family:'Caveat',cursive; font-size:13px; font-weight:600;
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; cursor:default; user-select:none;
-}
-
-/* ── Hamburger menu ── */
-#menu-overlay { transition: transform 0.3s ease, opacity 0.3s ease; }
-#menu-overlay.hidden-menu { transform:translateX(-100%); opacity:0; pointer-events:none; }
-
-.htag-row {
-  display:flex; align-items:center;
-  border-radius:8px; overflow:hidden; position:relative;
-  transition:background .15s;
-}
-.htag-row:hover { background:#f0e0cc; }
-.htag-row a {
-  flex:1; display:flex; align-items:center; gap:10px;
-  padding:8px 12px; text-decoration:none; color:#6b5240; font-size:14px;
-}
-.htag-row .dot-btn {
-  width:28px; height:28px; flex-shrink:0; margin-right:4px;
-  border:none; background:none; color:#c8a96e;
-  font-size:15px; cursor:pointer; border-radius:6px;
-  opacity:0; transition:opacity .15s;
-  display:flex; align-items:center; justify-content:center;
-}
-.htag-row:hover .dot-btn { opacity:1; }
-.htag-row .dot-btn:hover { background:#fce4d6; color:#b94040; }
-
-/* ── Dropdown menu ── */
-.dot-dropdown {
-  display:none; position:absolute; right:4px; top:34px;
-  background:#fffdf7; border:1.5px solid #e8d5be; border-radius:10px;
-  box-shadow:0 4px 16px rgba(0,0,0,0.12); z-index:99; min-width:100px;
-  overflow:hidden;
-}
-.dot-dropdown.open { display:block; }
-.dot-dropdown button {
-  display:block; width:100%; padding:8px 14px; text-align:left;
-  background:none; border:none; cursor:pointer; font-size:13px; color:#b94040;
-}
-.dot-dropdown button:hover { background:#fce4d6; }
-
-.empty-state { font-family:'Caveat',cursive; font-size:1.4rem; color:#b09070; text-align:center; padding:3rem 1rem; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Memories Wall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { font-family: 'Patrick Hand', cursive; }
+        body { background: #f5ede0; overflow-x: hidden; }
+        
+        /* Smooth infinite scroll */
+        .scroll-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        
+        .scroll-track {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem 1rem;
+            width: max-content;
+            will-change: transform;
+            animation: scroll 40s linear infinite;
+        }
+        
+        .scroll-track.paused {
+            animation-play-state: paused;
+        }
+        
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        /* Reverse direction for second row */
+        .scroll-track.reverse {
+            animation-direction: reverse;
+        }
+        
+        .polaroid {
+            background: #fffdf7;
+            padding: 0.5rem 0.5rem 1.5rem;
+            box-shadow: 3px 4px 14px rgba(0,0,0,0.15);
+            border-radius: 2px;
+            width: clamp(120px, 25vw, 160px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            transform-origin: center;
+        }
+        
+        .polaroid:hover {
+            transform: translateY(-5px) rotate(0deg) !important;
+            box-shadow: 8px 12px 28px rgba(0,0,0,0.25);
+        }
+        
+        .polaroid img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: 1px;
+        }
+        
+        .pin {
+            position: absolute;
+            top: -0.8rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1.2rem;
+            height: 1.8rem;
+            z-index: 2;
+        }
+        
+        .pin-head {
+            width: 1.2rem;
+            height: 1.2rem;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #d4a96a, #8B5E3C);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .pin-body {
+            width: 0.4rem;
+            height: 1rem;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #a07040, #7a5230);
+            border-radius: 0 0 3px 3px;
+        }
+        
+        .menu-overlay {
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+        }
+        
+        .menu-overlay.open {
+            transform: translateX(0);
+        }
+        
+        @media (min-width: 768px) {
+            .polaroid { width: 180px; }
+            .polaroid img { aspect-ratio: 1/1; }
+        }
+        
+        @media (min-width: 1024px) {
+            .polaroid { width: 200px; }
+        }
+        
+        .tag-chip {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #f0e0cc;
+            color: #8B6343;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .tag-chip:hover {
+            background: #e8d0b0;
+            transform: scale(1.05);
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #e8d5be 25%, #f5ede0 50%, #e8d5be 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
 </head>
 <body class="min-h-screen">
-
-<!-- ══ MENU OVERLAY ══ -->
-<div id="menu-overlay" class="hidden-menu fixed inset-0 z-50 flex">
-  <div class="absolute inset-0 bg-black/40" onclick="closeMenu()"></div>
-  <nav class="relative z-10 h-full bg-[#fdf6ec] shadow-2xl flex flex-col pt-14 pb-4" style="width:272px;">
-    <button onclick="closeMenu()" class="absolute top-4 right-4 text-[#8B6343] text-2xl leading-none">&times;</button>
-    <p class="font-['Caveat'] text-2xl text-[#8B6343] font-semibold px-5 mb-3">Memories Wall</p>
-
-    <div class="flex-1 overflow-y-auto px-3 space-y-1 pb-2">
-      <a href="index.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>🖼</span><span>Tất cả ảnh</span></a>
-
-      <div class="border-t border-[#e8d5be] my-2"></div>
-      <p class="px-3 text-[10px] font-semibold uppercase tracking-widest text-[#c8a96e] mb-1">Hashtag của tôi</p>
-
-      <!-- "Không có hashtag" option -->
-      <a href="hashtag.html?tag=__none__" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition text-sm">
-        <span>🏷</span><span>Không có hashtag</span>
-      </a>
-
-      <p id="htag-loading" class="px-3 text-xs text-[#c8a96e] animate-pulse">Đang tải…</p>
-      <ul id="htag-list" class="space-y-0.5"></ul>
-
-      <div class="border-t border-[#e8d5be] my-2"></div>
-      <a href="timeline.html"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📅</span><span>Dòng thời gian</span></a>
-      <a href="couple.html"    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>💝</span><span>Couple Album</span></a>
-      <a href="upload.html"    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] transition"><span>📤</span><span>Tải ảnh lên</span></a>
+    <!-- Menu Overlay -->
+    <div id="menuOverlay" class="menu-overlay fixed inset-y-0 left-0 z-50 w-64 md:w-72 bg-[#fdf6ec] shadow-2xl border-r border-[#e8d5be] p-5">
+        <div class="flex justify-between items-center mb-6">
+            <span class="text-2xl text-[#8B6343]">Memories</span>
+            <button onclick="toggleMenu()" class="text-2xl text-[#8B6343] hover:text-[#b94040]">×</button>
+        </div>
+        
+        <nav class="space-y-2">
+            <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc]">
+                <span>🏠</span> Trang chủ
+            </a>
+            <a href="timeline.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc]">
+                <span>📅</span> Dòng thời gian
+            </a>
+            <a href="couple.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc]">
+                <span>💝</span> Couple Album
+            </a>
+            
+            <div class="border-t border-[#e8d5be] my-3"></div>
+            
+            <p class="text-xs text-[#c8a96e] px-3 mb-1">HASHTAG CỦA TÔI</p>
+            
+            <a href="hashtag.html?tag=__none__" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc]">
+                <span>🏷</span> Không hashtag
+            </a>
+            
+            <div id="hashtagList" class="space-y-1 max-h-60 overflow-y-auto"></div>
+            
+            <div class="border-t border-[#e8d5be] my-3"></div>
+            
+            <a href="upload.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc]">
+                <span>📤</span> Tải ảnh lên
+            </a>
+            
+            <button onclick="handleLogout()" class="w-full text-left px-3 py-2 text-[#b09070] hover:text-[#8B6343]">
+                Đăng xuất
+            </button>
+        </nav>
     </div>
 
-    <div class="px-5 pt-3 border-t border-[#e8d5be]">
-      <button onclick="handleLogout()" class="w-full text-center text-xs text-[#b09070] hover:text-[#8B6343] transition py-2">Đăng xuất</button>
-    </div>
-  </nav>
-</div>
+    <!-- Top Bar -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be] px-4 py-2">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <button onclick="toggleMenu()" class="w-10 h-10 flex flex-col justify-center items-center gap-1.5 rounded-lg hover:bg-[#f0e0cc]">
+                <span class="w-5 h-0.5 bg-[#8B6343] rounded"></span>
+                <span class="w-5 h-0.5 bg-[#8B6343] rounded"></span>
+                <span class="w-5 h-0.5 bg-[#8B6343] rounded"></span>
+            </button>
+            
+            <h1 class="text-2xl md:text-3xl text-[#8B6343] tracking-wider">✦ Memories Wall</h1>
+            
+            <div class="flex items-center gap-2">
+                <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#c8a96e] to-[#8B6343] text-white flex items-center justify-center font-bold hidden"></div>
+                <a href="upload.html" class="w-10 h-10 rounded-full bg-[#c8a96e] hover:bg-[#b8945a] text-white flex items-center justify-center text-xl font-bold transition">+</a>
+            </div>
+        </div>
+    </header>
 
-<!-- ══ TOP BAR ══ -->
-<header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-[#fdf6ec]/90 backdrop-blur-sm border-b border-[#e8d5be]">
-  <button onclick="openMenu()" class="w-9 h-9 flex flex-col justify-center items-center gap-1.5 rounded-md hover:bg-[#f0e0cc] transition" aria-label="Menu">
-    <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
-    <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
-    <span class="block w-5 h-0.5 bg-[#8B6343] rounded"></span>
-  </button>
-  <h1 class="font-['Caveat'] text-xl font-semibold text-[#8B6343] tracking-wide">✦ Memories Wall</h1>
-  <div class="flex items-center gap-2">
-    <div id="auth-links" class="flex items-center gap-2">
-      <a href="login.html" class="text-xs px-3 py-1 rounded-full border border-[#c8a96e] text-[#8B6343] hover:bg-[#f0e0cc]">Đăng nhập</a>
-    </div>
-    <div id="user-avatar" class="user-avatar hidden"></div>
-    <a href="upload.html" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#c8a96e] hover:bg-[#b8945a] transition text-white text-lg font-bold">+</a>
-  </div>
-</header>
+    <main class="pt-16">
+        <!-- Loading State -->
+        <div id="loadingState" class="space-y-8 p-4">
+            <div class="scroll-container">
+                <div class="scroll-track">
+                    {[...Array(8)].map((_, i) => (
+                        `<div key={i} class="polaroid skeleton" style="width: 160px; height: 200px;"></div>`
+                    )).join('')}
+                </div>
+            </div>
+        </div>
 
-<!-- ══ MAIN ══ -->
-<main class="pt-16">
-  <div class="fairy-lights" id="fairy-lights-bar"></div>
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16 px-4">
+            <p class="text-6xl mb-4">📷</p>
+            <p class="text-2xl text-[#b09070] mb-2">Chưa có kỷ niệm nào</p>
+            <p class="text-[#c8a96e] mb-6">Hãy tải ảnh đầu tiên lên!</p>
+            <a href="upload.html" class="inline-block px-6 py-3 bg-[#c8a96e] text-white rounded-2xl text-lg hover:bg-[#b8945a] transition">Tải ảnh lên</a>
+        </div>
 
-  <!-- Row 1 -->
-  <div class="wall-row" id="row1-container" style="min-height:210px;">
-    <div class="rope"></div>
-    <div id="strip1" class="scroll-strip"></div>
-  </div>
+        <!-- Content -->
+        <div id="content" class="hidden space-y-8 py-4">
+            <!-- Row 1 -->
+            <div class="scroll-container">
+                <div id="scrollTrack1" class="scroll-track"></div>
+            </div>
 
-  <!-- Quotes -->
-  <p id="footer-note" class="text-center font-['Caveat'] text-[#c8a96e] text-base mt-4 mb-4 px-4">Mỗi tấm ảnh là một câu chuyện ✦</p>
+            <!-- Quote -->
+            <p class="text-center text-xl text-[#c8a96e] px-4">Mỗi tấm ảnh là một câu chuyện ✦</p>
 
-  <!-- Row 2 -->
-  <div class="wall-row" id="row2-container" style="min-height:210px;">
-    <div class="rope"></div>
-    <div id="strip2" class="scroll-strip"></div>
-  </div>
+            <!-- Row 2 (reverse direction) -->
+            <div class="scroll-container">
+                <div id="scrollTrack2" class="scroll-track reverse"></div>
+            </div>
+        </div>
+    </main>
 
-  <div id="empty-state" class="empty-state hidden">Chưa có ảnh nào. Hãy tải ảnh đầu tiên lên! 📷</div>
-  <div id="loading-state" class="text-center py-12 font-['Caveat'] text-[#b09070] text-lg animate-pulse">Đang tải kỷ niệm…</div>
-</main>
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-20 bg-[#3d2b1f] text-white px-6 py-3 rounded-full text-sm transition-transform duration-300 z-50 whitespace-nowrap"></div>
 
-<!-- ── Dropdown close on outside click ── -->
-<div id="dd-backdrop" class="hidden fixed inset-0 z-40" onclick="closeAllDropdowns()"></div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menuOverlay').classList.toggle('open');
+        }
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(80px)';
+            }, 2800);
+        }
+        
+        function handleLogout() {
+            if (confirm('Đăng xuất?')) {
+                supabaseClient.auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                });
+            }
+        }
+    </script>
 
-<!-- ── Plain script: UI helpers ── -->
-<script>
-function openMenu()  { document.getElementById('menu-overlay').classList.remove('hidden-menu'); }
-function closeMenu() { document.getElementById('menu-overlay').classList.add('hidden-menu'); }
+    <script type="module">
+        const { createClient } = supabase;
+        const sb = createClient(
+            'https://ifarghceexpsfyfatjkb.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
+        );
 
-function closeAllDropdowns() {
-  document.querySelectorAll('.dot-dropdown.open').forEach(d => d.classList.remove('open'));
-  document.getElementById('dd-backdrop').classList.add('hidden');
-}
-
-function toggleDropdown(id) {
-  const dd = document.getElementById(id);
-  const wasOpen = dd.classList.contains('open');
-  closeAllDropdowns();
-  if (!wasOpen) {
-    dd.classList.add('open');
-    document.getElementById('dd-backdrop').classList.remove('hidden');
-  }
-}
-</script>
-
-<!-- ── Module: Supabase ── -->
-<script type="module">
-const { createClient } = supabase;
-const sb = createClient(
-  'https://ifarghceexpsfyfatjkb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmYXJnaGNlZXhwc2Z5ZmF0amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTkyNDQsImV4cCI6MjA4ODczNTI0NH0.QRxgy_NDmHGGNOP3Di-zW5LlDy_sKVdSjbGa2zjk2qQ'
-);
-
-window.handleLogout = async () => { await sb.auth.signOut(); location.href = 'login.html'; };
-
-const { data: { session } } = await sb.auth.getSession();
-if (!session) { location.href = 'login.html'; }
-const userId = session.user.id;
-const email  = session.user.email || '';
-
-// Avatar
-const av = document.getElementById('user-avatar');
-av.textContent = email.slice(0, 2).toUpperCase();
-av.title = email;
-av.classList.remove('hidden');
-document.getElementById('auth-links').classList.add('hidden');
-
-// Fairy lights
-const COLORS = ['#ffd97d','#ffb347','#ff9aa2','#c7f2a4','#a8d8ea','#e2b4f7'];
-const bar = document.getElementById('fairy-lights-bar');
-for (let i = 0; i < Math.floor(window.innerWidth / 36) + 2; i++) {
-  const b = document.createElement('div');
-  b.className = 'bulb';
-  b.style.cssText = `left:${i*36+10}px;background:${COLORS[i%COLORS.length]};box-shadow:0 0 6px 2px ${COLORS[i%COLORS.length]}88;animation-delay:${i*0.15}s`;
-  bar.appendChild(b);
-}
-
-// ── Load hashtags for menu ──
-async function loadMenuHashtags() {
-  const { data: photos } = await sb
-    .from('photos').select('hashtags')
-    .eq('user_id', userId);
-
-  document.getElementById('htag-loading').style.display = 'none';
-
-  const allTags = new Set();
-  (photos || []).forEach(p => (p.hashtags || []).forEach(t => allTags.add(t.replace('#',''))));
-
-  const list = document.getElementById('htag-list');
-  list.innerHTML = '';
-  [...allTags].sort().forEach(tag => appendTagToMenu(tag, list));
-}
-
-function appendTagToMenu(tag, list) {
-  if (!list) list = document.getElementById('htag-list');
-  const id = 'dd-' + tag.replace(/\W/g,'_');
-  const li = document.createElement('li');
-  li.className = 'htag-row';
-  li.dataset.tag = tag;
-  li.innerHTML = `
-    <a href="hashtag.html?tag=${encodeURIComponent(tag)}">
-      <span>#</span><span>${tag}</span>
-    </a>
-    <button class="dot-btn" onclick="toggleDropdown('${id}')" title="Tùy chọn">⋯</button>
-    <div class="dot-dropdown" id="${id}">
-      <button onclick="deleteHashtag('${tag}', this)">🗑 Xóa hashtag</button>
-    </div>
-  `;
-  list.appendChild(li);
-}
-
-window.deleteHashtag = async function(tag, btn) {
-  if (!confirm(`Xóa hashtag #${tag}?\n(Ảnh sẽ không bị xóa)`)) return;
-  if (!confirm(`Xác nhận lần 2: xóa #${tag} khỏi tất cả ảnh?`)) return;
-  closeAllDropdowns();
-
-  // Remove tag from all photos that have it
-  const { data: tagged } = await sb
-    .from('photos').select('id, hashtags')
-    .eq('user_id', userId)
-    .contains('hashtags', [tag]);
-
-  for (const p of (tagged || [])) {
-    const updated = (p.hashtags || []).filter(h => h.replace('#','') !== tag);
-    await sb.from('photos').update({ hashtags: updated }).eq('id', p.id);
-  }
-
-  // Also check with # prefix
-  const { data: tagged2 } = await sb
-    .from('photos').select('id, hashtags')
-    .eq('user_id', userId)
-    .contains('hashtags', ['#' + tag]);
-
-  for (const p of (tagged2 || [])) {
-    const updated = (p.hashtags || []).filter(h => h.replace('#','') !== tag);
-    await sb.from('photos').update({ hashtags: updated }).eq('id', p.id);
-  }
-
-  // Remove from menu
-  document.querySelector(`li[data-tag="${tag}"]`)?.remove();
-  alert(`Đã xóa hashtag #${tag}`);
-};
-
-await loadMenuHashtags();
-
-// ── Load photos ──
-const { data: photos, error } = await sb
-  .from('photos').select('*')
-  .eq('user_id', userId)
-  .order('created_at', { ascending: false });
-
-document.getElementById('loading-state').classList.add('hidden');
-
-if (error || !photos?.length) {
-  document.getElementById('empty-state').classList.remove('hidden');
-} else {
-  document.getElementById('empty-state').classList.add('hidden');
-
-  // Pad to min 8 then duplicate for seamless loop
-  const MIN = 8;
-  let base = [...photos];
-  while (base.length < MIN) base = [...base, ...photos];
-  const doubled = [...base, ...base];
-
-  // Split into 2 rows
-  const mid   = Math.ceil(doubled.length / 2);
-  const set1  = doubled.slice(0, mid);
-  const set2  = doubled.slice(mid);
-
-  const rots = [-4,-2,0,2,4,-3,3,-1,1];
-
-  function buildCard(p, i) {
-    const rot  = rots[i % rots.length];
-    const card = document.createElement('div');
-    card.className = 'polaroid';
-    card.style.cssText = `transform:rotate(${rot}deg);margin-top:${Math.abs(rot)*2}px`;
-
-    const tagHTML = (p.hashtags || []).slice(0,3).map(t => {
-      const clean = t.replace('#','');
-      return `<a href="hashtag.html?tag=${encodeURIComponent(clean)}" onclick="event.stopPropagation()">#${clean}</a>`;
-    }).join('');
-
-    card.innerHTML = `
-      <div class="pin"><div class="pin-head"></div><div class="pin-body"></div></div>
-      <img src="${p.image_url}" alt="${p.note||'Memory'}" loading="lazy" draggable="false"/>
-      <p class="caption">${p.note ? p.note.slice(0,26) : '✦'}</p>
-      ${tagHTML ? `<div class="tag-row">${tagHTML}</div>` : ''}
-    `;
-    card.onclick = () => location.href = `viewer.html?id=${p.id}`;
-    return card;
-  }
-
-  const strip1 = document.getElementById('strip1');
-  const strip2 = document.getElementById('strip2');
-  set1.forEach((p,i) => strip1.appendChild(buildCard(p,i)));
-  set2.forEach((p,i) => strip2.appendChild(buildCard(p,i)));
-
-  // ── RAF infinite scroll ──
-  let pos1 = 0, pos2 = 0;
-  let paused1 = false, paused2 = false;
-  const speed1 = 0.45, speed2 = 0.38;
-  let wheelTimer1, wheelTimer2;
-
-  function getHalf(strip) { return strip.scrollWidth / 2; }
-
-  function animate() {
-    if (!paused1) {
-      pos1 -= speed1;
-      const half1 = getHalf(strip1);
-      if (half1 > 0 && Math.abs(pos1) >= half1) pos1 = 0;
-      strip1.style.transform = `translateX(${pos1}px)`;
-    }
-    if (!paused2) {
-      pos2 -= speed2;
-      const half2 = getHalf(strip2);
-      if (half2 > 0 && Math.abs(pos2) >= half2) pos2 = 0;
-      strip2.style.transform = `translateX(${pos2}px)`;
-    }
-    requestAnimationFrame(animate);
-  }
-  requestAnimationFrame(animate);
-
-  // Pause on hover
-  document.getElementById('row1-container').addEventListener('mouseenter', () => paused1 = true);
-  document.getElementById('row1-container').addEventListener('mouseleave', () => paused1 = false);
-  document.getElementById('row2-container').addEventListener('mouseenter', () => paused2 = true);
-  document.getElementById('row2-container').addEventListener('mouseleave', () => paused2 = false);
-
-  // Wheel scroll
-  document.getElementById('row1-container').addEventListener('wheel', e => {
-    e.preventDefault();
-    pos1 -= e.deltaY * 1.2;
-    paused1 = true;
-    clearTimeout(wheelTimer1);
-    wheelTimer1 = setTimeout(() => paused1 = false, 1500);
-  }, { passive: false });
-
-  document.getElementById('row2-container').addEventListener('wheel', e => {
-    e.preventDefault();
-    pos2 -= e.deltaY * 1.2;
-    paused2 = true;
-    clearTimeout(wheelTimer2);
-    wheelTimer2 = setTimeout(() => paused2 = false, 1500);
-  }, { passive: false });
-
-  // Touch/drag
-  function addDrag(container, getPos, setPos) {
-    let dragging = false, startX = 0, startPos = 0;
-    container.addEventListener('mousedown', e => {
-      dragging = true; startX = e.pageX; startPos = getPos();
-      container.style.cursor = 'grabbing';
-    });
-    window.addEventListener('mouseup', () => { dragging = false; container.style.cursor = ''; });
-    window.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      setPos(startPos - (e.pageX - startX));
-    });
-  }
-  addDrag(
-    document.getElementById('row1-container'),
-    () => pos1,
-    v => { pos1 = v; paused1 = true; clearTimeout(wheelTimer1); wheelTimer1 = setTimeout(()=>paused1=false,1500); }
-  );
-  addDrag(
-    document.getElementById('row2-container'),
-    () => pos2,
-    v => { pos2 = v; paused2 = true; clearTimeout(wheelTimer2); wheelTimer2 = setTimeout(()=>paused2=false,1500); }
-  );
-}
-</script>
+        // Check session
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        const userId = session.user.id;
+        const userEmail = session.user.email || '';
+        
+        // Update avatar
+        const avatar = document.getElementById('userAvatar');
+        avatar.textContent = userEmail.slice(0, 2).toUpperCase();
+        avatar.classList.remove('hidden');
+        
+        // Load hashtags for menu
+        async function loadHashtags() {
+            const { data: photos } = await sb
+                .from('photos')
+                .select('hashtags')
+                .eq('user_id', userId);
+            
+            const allTags = new Set();
+            (photos || []).forEach(p => {
+                (p.hashtags || []).forEach(t => {
+                    allTags.add(t.replace('#', '').toLowerCase());
+                });
+            });
+            
+            const list = document.getElementById('hashtagList');
+            list.innerHTML = '';
+            
+            [...allTags].sort().forEach(tag => {
+                const a = document.createElement('a');
+                a.href = `hashtag.html?tag=${encodeURIComponent(tag)}`;
+                a.className = 'flex items-center gap-3 px-3 py-2 rounded-lg text-[#6b5240] hover:bg-[#f0e0cc] text-sm';
+                a.innerHTML = `<span>#</span><span>${tag}</span>`;
+                list.appendChild(a);
+            });
+        }
+        
+        await loadHashtags();
+        
+        // Load photos
+        const { data: photos, error } = await sb
+            .from('photos')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        
+        document.getElementById('loadingState').classList.add('hidden');
+        
+        if (error || !photos?.length) {
+            document.getElementById('emptyState').classList.remove('hidden');
+            return;
+        }
+        
+        document.getElementById('content').classList.remove('hidden');
+        
+        // Prepare photos for infinite scroll
+        const MIN_PHOTOS = 10;
+        let displayPhotos = [...photos];
+        while (displayPhotos.length < MIN_PHOTOS) {
+            displayPhotos = [...displayPhotos, ...photos];
+        }
+        
+        // Split into two rows
+        const mid = Math.ceil(displayPhotos.length / 2);
+        const row1Photos = displayPhotos.slice(0, mid);
+        const row2Photos = displayPhotos.slice(mid);
+        
+        const rotations = [-4, -2, 0, 2, 4, -3, 3, -1, 1];
+        
+        function createPolaroid(photo, index) {
+            const rotation = rotations[index % rotations.length];
+            const marginTop = Math.abs(rotation) * 0.15;
+            
+            const div = document.createElement('div');
+            div.className = 'polaroid';
+            div.style.transform = `rotate(${rotation}deg)`;
+            div.style.marginTop = `${marginTop}rem`;
+            
+            const hashtags = (photo.hashtags || []).slice(0, 2);
+            const tagsHtml = hashtags.length ? 
+                `<div class="flex flex-wrap gap-1 justify-center mt-2">
+                    ${hashtags.map(t => `<span class="tag-chip">${t}</span>`).join('')}
+                </div>` : '';
+            
+            div.innerHTML = `
+                <div class="pin">
+                    <div class="pin-head"></div>
+                    <div class="pin-body"></div>
+                </div>
+                <img src="${photo.image_url}" alt="${photo.note || 'Memory'}" loading="lazy" class="w-full h-auto">
+                <p class="text-center text-sm text-[#6b5240] mt-2 truncate">${photo.note || '✦'}</p>
+                ${tagsHtml}
+            `;
+            
+            div.addEventListener('click', () => {
+                window.location.href = `viewer.html?id=${photo.id}`;
+            });
+            
+            return div;
+        }
+        
+        // Populate rows
+        const track1 = document.getElementById('scrollTrack1');
+        const track2 = document.getElementById('scrollTrack2');
+        
+        // Duplicate for seamless loop (CSS animation handles this)
+        row1Photos.forEach((photo, i) => {
+            track1.appendChild(createPolaroid(photo, i));
+        });
+        
+        row2Photos.forEach((photo, i) => {
+            track2.appendChild(createPolaroid(photo, i));
+        });
+        
+        // Pause on hover
+        document.querySelectorAll('.scroll-container').forEach(container => {
+            container.addEventListener('mouseenter', () => {
+                container.querySelector('.scroll-track').classList.add('paused');
+            });
+            container.addEventListener('mouseleave', () => {
+                container.querySelector('.scroll-track').classList.remove('paused');
+            });
+        });
+    </script>
 </body>
 </html>
